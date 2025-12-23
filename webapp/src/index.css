@@ -1,0 +1,215 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Dofus Official Theme - Dark Forest with Lime accents */
+    --background: 120 15% 8%;
+    --foreground: 60 10% 95%;
+
+    --card: 120 12% 12%;
+    --card-foreground: 60 10% 95%;
+
+    --popover: 120 15% 10%;
+    --popover-foreground: 60 10% 95%;
+
+    --primary: 82 85% 50%;
+    --primary-foreground: 120 15% 8%;
+
+    --secondary: 120 10% 18%;
+    --secondary-foreground: 60 10% 95%;
+
+    --muted: 120 10% 16%;
+    --muted-foreground: 120 8% 55%;
+
+    --accent: 82 85% 50%;
+    --accent-foreground: 120 15% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 60 10% 95%;
+
+    --border: 120 12% 22%;
+    --input: 120 10% 16%;
+    --ring: 82 85% 50%;
+
+    --radius: 0.5rem;
+
+    /* Custom Dofus colors */
+    --lime: 82 85% 50%;
+    --lime-light: 82 90% 60%;
+    --lime-dark: 82 80% 40%;
+    --forest: 120 15% 12%;
+    --forest-light: 120 12% 18%;
+    --forest-dark: 120 18% 6%;
+    --bark: 30 25% 20%;
+    --profit: 142 71% 45%;
+    --loss: 0 84% 60%;
+
+    /* Gradients */
+    --gradient-main: linear-gradient(180deg, hsl(120, 18%, 6%) 0%, hsl(120, 15%, 10%) 50%, hsl(120, 12%, 14%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(120, 12%, 14%) 0%, hsl(120, 12%, 10%) 100%);
+    --gradient-lime: linear-gradient(135deg, hsl(82, 90%, 60%) 0%, hsl(82, 85%, 50%) 50%, hsl(82, 80%, 40%) 100%);
+    --gradient-profit: linear-gradient(90deg, hsl(142, 71%, 35%) 0%, hsl(142, 76%, 50%) 100%);
+    --gradient-loss: linear-gradient(90deg, hsl(0, 72%, 40%) 0%, hsl(0, 84%, 55%) 100%);
+
+    /* Shadows */
+    --shadow-lime: 0 0 20px hsl(82, 85%, 50%, 0.4);
+    --shadow-card: 0 8px 32px hsl(0, 0%, 0%, 0.5);
+    --shadow-glow: 0 0 40px hsl(82, 85%, 50%, 0.25);
+
+    --sidebar-background: 120 15% 8%;
+    --sidebar-foreground: 60 10% 95%;
+    --sidebar-primary: 82 85% 50%;
+    --sidebar-primary-foreground: 120 15% 8%;
+    --sidebar-accent: 120 10% 18%;
+    --sidebar-accent-foreground: 60 10% 95%;
+    --sidebar-border: 120 12% 22%;
+    --sidebar-ring: 82 85% 50%;
+  }
+
+  .dark {
+    --background: 120 15% 8%;
+    --foreground: 60 10% 95%;
+    --card: 120 12% 12%;
+    --card-foreground: 60 10% 95%;
+    --popover: 120 15% 10%;
+    --popover-foreground: 60 10% 95%;
+    --primary: 82 85% 50%;
+    --primary-foreground: 120 15% 8%;
+    --secondary: 120 10% 18%;
+    --secondary-foreground: 60 10% 95%;
+    --muted: 120 10% 16%;
+    --muted-foreground: 120 8% 55%;
+    --accent: 82 85% 50%;
+    --accent-foreground: 120 15% 8%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 60 10% 95%;
+    --border: 120 12% 22%;
+    --input: 120 10% 16%;
+    --ring: 82 85% 50%;
+    --sidebar-background: 120 15% 8%;
+    --sidebar-foreground: 60 10% 95%;
+    --sidebar-primary: 82 85% 50%;
+    --sidebar-primary-foreground: 120 15% 8%;
+    --sidebar-accent: 120 10% 18%;
+    --sidebar-accent-foreground: 60 10% 95%;
+    --sidebar-border: 120 12% 22%;
+    --sidebar-ring: 82 85% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background: var(--gradient-main);
+    min-height: 100vh;
+    font-family: 'Roboto', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  .lime-glow {
+    box-shadow: var(--shadow-lime);
+  }
+
+  .lime-border {
+    border: 2px solid hsl(var(--lime));
+    box-shadow: 0 0 15px hsl(var(--lime) / 0.3);
+  }
+
+  .card-dofus {
+    background: var(--gradient-card);
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-card);
+    backdrop-filter: blur(10px);
+  }
+
+  .text-lime-gradient {
+    background: var(--gradient-lime);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .profit-row {
+    background: linear-gradient(90deg, hsl(142, 71%, 45%, 0.15) 0%, transparent 100%);
+    border-left: 3px solid hsl(var(--profit));
+  }
+
+  .loss-row {
+    background: linear-gradient(90deg, hsl(0, 84%, 60%, 0.15) 0%, transparent 100%);
+    border-left: 3px solid hsl(var(--loss));
+  }
+
+  .input-dofus {
+    @apply bg-muted border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200;
+  }
+
+  .btn-lime {
+    background: var(--gradient-lime);
+    @apply text-primary-foreground font-semibold shadow-lg transition-all duration-300 rounded-full;
+  }
+
+  .btn-lime:hover {
+    box-shadow: var(--shadow-lime);
+    transform: translateY(-2px);
+  }
+
+  .header-dark {
+    background: hsl(0, 0%, 5%);
+    border-bottom: 1px solid hsl(var(--border));
+  }
+}
+
+@layer utilities {
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 10px hsl(var(--lime) / 0.3);
+    }
+    to {
+      box-shadow: 0 0 25px hsl(var(--lime) / 0.6);
+    }
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  .animate-pulse-lime {
+    animation: pulse-lime 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse-lime {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+}
