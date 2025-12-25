@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { DofusItem, Resource, RecipeIngredient } from "@/types/dofus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,15 +7,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Coins, ArrowRight, Package } from "lucide-react";
-import { mockPrices, mockHdvPrices } from "@/data/mockItems";
+import { useRecipes } from "@/hooks/useRecipes";
+import { usePrices } from "@/hooks/usePrices";
 
 interface PriceInputModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedItems: DofusItem[];
   onConfirm: (resources: Resource[], hdvPrices: { [key: number]: number }) => void;
+  server: string;
 }
 
 const PriceInputModal = ({
@@ -23,39 +26,34 @@ const PriceInputModal = ({
   onClose,
   selectedItems,
   onConfirm,
+  server,
 }: PriceInputModalProps) => {
   const [step, setStep] = useState<"resources" | "hdv">("resources");
-  const [resourcePrices, setResourcePrices] = useState<{ [key: number]: number }>({});
-  const [hdvPrices, setHdvPrices] = useState<{ [key: number]: number }>({});
+  const itemIds = useMemo(() => Array.from(new Set(selectedItems.map((item) => item.id))).filter(Boolean), [selectedItems]);
+  const { recipes, isLoading: recipesLoading } = useRecipes(itemIds);
+  const { resourcePrices, itemPrices, setResourcePrices, setItemPrices, savePrices, resetPrices } = usePrices(server);
 
-  // Aggregate all unique resources from selected items
-  const aggregatedResources = selectedItems.reduce<{ [key: number]: RecipeIngredient & { totalQty: number } }>((acc, item) => {
-    item.recipe?.forEach((ingredient) => {
-      if (acc[ingredient.itemId]) {
-        acc[ingredient.itemId].totalQty += ingredient.quantity;
-      } else {
-        acc[ingredient.itemId] = { ...ingredient, totalQty: ingredient.quantity };
-      }
-    });
-    return acc;
-  }, {});
+  const aggregatedResources = useMemo(() => {
+    try {
+      return selectedItems.reduce<{ [key: number]: RecipeIngredient & { totalQty: number } }>((acc, item) => {
+        const recipe = recipes[item.id] || item.recipe || [];
+        recipe.forEach((ingredient) => {
+          if (!ingredient || ingredient.itemId === undefined || ingredient.itemId === null || ingredient.itemId === 0) return;
+          if (acc[ingredient.itemId]) {
+            acc[ingredient.itemId].totalQty += ingredient.quantity;
+          } else {
+            acc[ingredient.itemId] = { ...ingredient, totalQty: ingredient.quantity } as RecipeIngredient & { totalQty: number };
+          }
+        });
+        return acc;
+      }, {});
+    } catch (err) {
+      console.error("aggregate resources failed", { err, selectedItems, recipes });
+      return {};
+    }
+  }, [recipes, selectedItems]);
 
   const resourceList = Object.values(aggregatedResources);
-
-  // Initialize with mock prices
-  useEffect(() => {
-    const initialResourcePrices: { [key: number]: number } = {};
-    resourceList.forEach((res) => {
-      initialResourcePrices[res.itemId] = mockPrices[res.itemId] || 0;
-    });
-    setResourcePrices(initialResourcePrices);
-
-    const initialHdvPrices: { [key: number]: number } = {};
-    selectedItems.forEach((item) => {
-      initialHdvPrices[item.id] = mockHdvPrices[item.id] || 0;
-    });
-    setHdvPrices(initialHdvPrices);
-  }, [selectedItems]);
 
   const handleResourcePriceChange = (id: number, value: string) => {
     const numValue = parseInt(value.replace(/\D/g, "")) || 0;
@@ -64,7 +62,7 @@ const PriceInputModal = ({
 
   const handleHdvPriceChange = (id: number, value: string) => {
     const numValue = parseInt(value.replace(/\D/g, "")) || 0;
-    setHdvPrices((prev) => ({ ...prev, [id]: numValue }));
+    setItemPrices((prev) => ({ ...prev, [id]: numValue }));
   };
 
   const formatKamas = (value: number) => {
@@ -77,15 +75,16 @@ const PriceInputModal = ({
       name: res.name,
       iconUrl: res.iconUrl,
       totalQuantity: res.totalQty,
-      unitPrice: resourcePrices[res.itemId] || 0,
-      totalCost: (resourcePrices[res.itemId] || 0) * res.totalQty,
+      unitPrice: resourcePrices[res.itemId] ?? 0,
+      totalCost: (resourcePrices[res.itemId] ?? 0) * res.totalQty,
     }));
-    onConfirm(resources, hdvPrices);
+    savePrices(resourcePrices, itemPrices);
+    onConfirm(resources, itemPrices);
     onClose();
   };
 
   const totalResourceCost = resourceList.reduce(
-    (sum, res) => sum + (resourcePrices[res.itemId] || 0) * res.totalQty,
+    (sum, res) => sum + (resourcePrices[res.itemId] ?? 0) * res.totalQty,
     0
   );
 
@@ -97,6 +96,9 @@ const PriceInputModal = ({
             <Coins className="w-6 h-6" />
             {step === "resources" ? "Prix des Ressources" : "Prix HDV des Items"}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Saisie des prix ressources et HDV avant calcul de rentabilité.
+          </DialogDescription>
         </DialogHeader>
 
         {/* Progress indicator */}
@@ -126,6 +128,12 @@ const PriceInputModal = ({
                     src={res.iconUrl}
                     alt={res.name}
                     className="w-10 h-10 rounded"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(res.name)}`;
+                      e.currentTarget.src = fallback;
+                    }}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground truncate">{res.name}</p>
@@ -136,10 +144,10 @@ const PriceInputModal = ({
                   <div className="flex items-center gap-2">
                     <Input
                       type="text"
-                      value={formatKamas(resourcePrices[res.itemId] || 0)}
-                      onChange={(e) => handleResourcePriceChange(res.itemId, e.target.value)}
-                      className="w-28 text-right input-dofus"
-                    />
+                    value={formatKamas(resourcePrices[res.itemId] ?? 0)}
+                    onChange={(e) => handleResourcePriceChange(res.itemId, e.target.value)}
+                    className="w-28 text-right input-dofus"
+                  />
                     <span className="text-xs text-primary">k</span>
                   </div>
                   <div className="text-right min-w-[100px]">
@@ -150,6 +158,11 @@ const PriceInputModal = ({
                   </div>
                 </div>
               ))}
+              {resourceList.length === 0 && (
+                <div className="text-center text-sm text-muted-foreground py-6">
+                  {recipesLoading ? "Chargement des recettes..." : "Aucune recette disponible"}
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
@@ -162,6 +175,12 @@ const PriceInputModal = ({
                     src={item.iconUrl}
                     alt={item.name}
                     className="w-12 h-12 rounded-lg"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(item.name)}`;
+                      e.currentTarget.src = fallback;
+                    }}
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground">{item.name}</p>
@@ -173,10 +192,10 @@ const PriceInputModal = ({
                     <span className="text-xs text-muted-foreground">Prix HDV:</span>
                     <Input
                       type="text"
-                      value={formatKamas(hdvPrices[item.id] || 0)}
-                      onChange={(e) => handleHdvPriceChange(item.id, e.target.value)}
-                      className="w-36 text-right input-dofus"
-                    />
+                    value={formatKamas(itemPrices[item.id] ?? 0)}
+                    onChange={(e) => handleHdvPriceChange(item.id, e.target.value)}
+                    className="w-36 text-right input-dofus"
+                  />
                     <span className="text-xs text-primary">k</span>
                   </div>
                 </div>
@@ -206,7 +225,7 @@ const PriceInputModal = ({
               Annuler
             </Button>
             {step === "resources" ? (
-              <Button variant="lime" onClick={() => setStep("hdv")} className="flex-1 gap-2">
+                <Button variant="lime" onClick={() => setStep("hdv")} className="flex-1 gap-2" disabled={recipesLoading}>
                 Suivant
                 <ArrowRight className="w-4 h-4" />
               </Button>
@@ -216,6 +235,17 @@ const PriceInputModal = ({
                 Calculer la rentabilité
               </Button>
             )}
+            <Button
+              variant="outline"
+              onClick={() => {
+                resetPrices();
+                setResourcePrices({});
+                setItemPrices({});
+              }}
+              className="flex-1"
+            >
+              Réinitialiser les prix
+            </Button>
           </div>
         </div>
       </DialogContent>

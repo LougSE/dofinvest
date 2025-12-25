@@ -40,6 +40,19 @@ export interface ProfitabilityResult {
   resources: Resource[];
 }
 
+export interface DofapiItem {
+  _id?: number;
+  ankamaId?: number;
+  id?: number;
+  name: string;
+  level: number;
+  type: string;
+  icon?: string;
+  imgUrl?: string;
+  imageUrl?: string;
+  recipe?: Array<{ id?: number; ankamaId?: number; name?: string; quantity: number; image?: string; imageUrl?: string; icon?: string }>;
+}
+
 export interface ServerPrices {
   [resourceId: number]: number;
 }

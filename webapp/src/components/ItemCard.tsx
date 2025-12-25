@@ -42,6 +42,12 @@ const ItemCard = ({ item, isSelected, onSelect }: ItemCardProps) => {
             src={item.iconUrl}
             alt={item.name}
             className="w-full h-full object-cover"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              e.currentTarget.onerror = null;
+              const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(item.name)}`;
+              e.currentTarget.src = fallback;
+            }}
           />
         </div>
         
@@ -59,8 +65,10 @@ const ItemCard = ({ item, isSelected, onSelect }: ItemCardProps) => {
         <h3 className="font-semibold text-foreground text-sm leading-tight line-clamp-2 group-hover:text-primary transition-colors">
           {item.name}
         </h3>
-        <div className="flex items-center justify-center gap-2 text-xs">
-          <span className="text-muted-foreground">{item.type}</span>
+        <div className="flex items-center justify-center gap-2 text-xs flex-wrap">
+          <span className="px-2 py-0.5 rounded-full bg-secondary/70 border border-border text-muted-foreground">
+            {item.type}
+          </span>
           <span className="text-primary">Niv. {item.level}</span>
         </div>
       </div>

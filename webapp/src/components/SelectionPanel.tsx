@@ -55,6 +55,12 @@ const SelectionPanel = ({
                       src={item.iconUrl}
                       alt={item.name}
                       className="w-5 h-5 rounded"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(item.name)}`;
+                        e.currentTarget.src = fallback;
+                      }}
                     />
                     <span className="text-foreground max-w-[120px] truncate">
                       {item.name}

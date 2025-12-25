@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { DofusItem, Resource, ProfitabilityResult } from "@/types/dofus";
-import { mockItems } from "@/data/mockItems";
+import { useItemsSearch } from "@/hooks/useItemsSearch";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
 import ItemGrid from "@/components/ItemGrid";
@@ -18,26 +18,30 @@ const Index = () => {
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [viewState, setViewState] = useState<ViewState>("search");
   const [results, setResults] = useState<ProfitabilityResult[]>([]);
+  const server = "Abrak";
+
+  const { items: searchResults, isLoading: isSearchLoading, error: searchError, isOfflineFallback, minQueryMet } = useItemsSearch({
+    query: searchQuery,
+    craftableOnly,
+    page: 1,
+  });
 
   // Filter items based on search and craftable filter
   const filteredItems = useMemo(() => {
-    return mockItems.filter((item) => {
-      const matchesSearch = item.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      const matchesCraftable = craftableOnly ? item.isCraftable : true;
-      return matchesSearch && matchesCraftable;
-    });
-  }, [searchQuery, craftableOnly]);
+    return searchResults;
+  }, [searchResults]);
 
   const handleSelectItem = (item: DofusItem) => {
-    setSelectedItems((prev) => {
-      const isSelected = prev.some((i) => i.id === item.id);
-      if (isSelected) {
-        return prev.filter((i) => i.id !== item.id);
-      }
-      return [...prev, item];
-    });
+    try {
+      setSelectedItems((prev) => {
+        const isSelected = prev.some((i) => i.id === item.id);
+        const next = isSelected ? prev.filter((i) => i.id !== item.id) : [...prev, item];
+        console.log("selection updated", { count: next.length, selectedIds: next.map((i) => i.id) });
+        return next;
+      });
+    } catch (err) {
+      console.error("handleSelectItem failed", { err, item });
+    }
   };
 
   const handleRemoveItem = (item: DofusItem) => {
@@ -49,6 +53,8 @@ const Index = () => {
   };
 
   const handleAnalyze = () => {
+    console.log("analyze click", { selectedCount: selectedItems.length, selectedIds: selectedItems.map((i) => i.id) });
+    if (selectedItems.length === 0) return;
     setIsPriceModalOpen(true);
   };
 
@@ -134,6 +140,12 @@ const Index = () => {
                 craftableOnly={craftableOnly}
               />
 
+              {!minQueryMet && (
+                <p className="text-center text-sm text-muted-foreground">
+                  Saisissez au moins 2 caractères pour rechercher.
+                </p>
+              )}
+
               {/* Results count */}
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
@@ -142,11 +154,27 @@ const Index = () => {
               </div>
 
               {/* Item grid */}
-              <ItemGrid
-                items={filteredItems}
-                selectedItems={selectedItems}
-                onSelectItem={handleSelectItem}
-              />
+              {minQueryMet && (
+                <ItemGrid
+                  items={filteredItems}
+                  selectedItems={selectedItems}
+                  onSelectItem={handleSelectItem}
+                />
+              )}
+
+              {isSearchLoading && (
+                <p className="text-center text-sm text-muted-foreground">Chargement des items...</p>
+              )}
+
+              {searchError && (
+                <p className="text-center text-sm text-loss">{searchError}</p>
+              )}
+
+              {isOfflineFallback && (
+                <p className="text-center text-xs text-muted-foreground">
+                  Mode démo (cache local) — vérifiez votre connexion Dofapi.
+                </p>
+              )}
 
               {/* Selection panel */}
               <SelectionPanel
@@ -157,12 +185,15 @@ const Index = () => {
               />
 
               {/* Price input modal */}
-              <PriceInputModal
-                isOpen={isPriceModalOpen}
-                onClose={() => setIsPriceModalOpen(false)}
-                selectedItems={selectedItems}
-                onConfirm={handleConfirmPrices}
-              />
+              {isPriceModalOpen && (
+                <PriceInputModal
+                  isOpen={isPriceModalOpen}
+                  onClose={() => setIsPriceModalOpen(false)}
+                  selectedItems={selectedItems}
+                  onConfirm={handleConfirmPrices}
+                  server={server}
+                />
+              )}
 
               {/* Bottom padding for selection panel */}
               {selectedItems.length > 0 && <div className="h-32" />}

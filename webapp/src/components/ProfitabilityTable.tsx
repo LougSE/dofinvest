@@ -205,6 +205,12 @@ const ProfitabilityTable = ({ results, onBack }: ProfitabilityTableProps) => {
                         src={result.item.iconUrl}
                         alt={result.item.name}
                         className="w-10 h-10 rounded-lg"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(result.item.name)}`;
+                          e.currentTarget.src = fallback;
+                        }}
                       />
                       <div>
                         <p className="font-medium text-foreground">{result.item.name}</p>
@@ -279,6 +285,12 @@ const ProfitabilityTable = ({ results, onBack }: ProfitabilityTableProps) => {
                                 src={res.iconUrl}
                                 alt={res.name}
                                 className="w-8 h-8 rounded"
+                                referrerPolicy="no-referrer"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(res.name)}`;
+                                  e.currentTarget.src = fallback;
+                                }}
                               />
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs text-foreground truncate">
