@@ -31,23 +31,30 @@ interface ProfitabilityTableProps {
 type SortKey = "benefit" | "marginPercent" | "hdvPrice" | "costTotal";
 
 const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityChange }: ProfitabilityTableProps) => {
-  const [sortKey, setSortKey] = useState<SortKey>("costTotal");
+  const [sortKey, setSortKey] = useState<SortKey>("marginPercent");
   const [sortDesc, setSortDesc] = useState(true);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [editableResults, setEditableResults] = useState<ProfitabilityResult[]>(results);
   const [resourceSortDesc, setResourceSortDesc] = useState(true);
   const [includedIds, setIncludedIds] = useState<Set<number>>(new Set(results.map((r) => r.item.id)));
   const [expandedSortDesc, setExpandedSortDesc] = useState<Record<number, boolean>>({});
+  const [acknowledgedResourceIds, setAcknowledgedResourceIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     setEditableResults(results);
     setIncludedIds(new Set(results.map((r) => r.item.id)));
+    setAcknowledgedResourceIds(new Set());
   }, [results]);
 
   const sortedResults = [...editableResults].sort((a, b) => {
     const multiplier = sortDesc ? -1 : 1;
     return (a[sortKey] - b[sortKey]) * multiplier;
   });
+
+  const includedResults = useMemo(
+    () => editableResults.filter((r) => includedIds.has(r.item.id)),
+    [editableResults, includedIds],
+  );
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -80,13 +87,13 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
     return value.toLocaleString("fr-FR");
   };
 
-  const totalBenefit = editableResults.reduce((sum, r) => sum + r.benefit, 0);
+  const totalBenefit = includedResults.reduce((sum, r) => sum + r.benefit, 0);
   const bestItem = useMemo(() => {
-    if (!editableResults.length) return undefined;
-    return editableResults.reduce((best, cur) => (cur.benefit > (best?.benefit ?? -Infinity) ? cur : best),
+    if (!includedResults.length) return undefined;
+    return includedResults.reduce((best, cur) => (cur.benefit > (best?.benefit ?? -Infinity) ? cur : best),
       undefined as ProfitabilityResult | undefined);
-  }, [editableResults]);
-  const profitableCount = editableResults.filter((r) => r.benefit > 0).length;
+  }, [includedResults]);
+  const profitableCount = includedResults.filter((r) => r.benefit > 0).length;
 
   const handlePriceChange = (id: number, value: string) => {
     const clean = parseInt(value.replace(/\D/g, "")) || 0;
@@ -131,6 +138,17 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
     () => aggregatedResources.reduce((sum, r) => sum + r.totalCost, 0),
     [aggregatedResources],
   );
+
+  useEffect(() => {
+    setAcknowledgedResourceIds((prev) => {
+      const existingIds = new Set(aggregatedResources.map((r) => r.id));
+      const next = new Set<number>();
+      prev.forEach((id) => {
+        if (existingIds.has(id)) next.add(id);
+      });
+      return next;
+    });
+  }, [aggregatedResources]);
 
   const computeExpandedCostStyle = (resources: Resource[]) => {
     const max = resources.reduce((m, r) => Math.max(m, r.totalCost), 0);
@@ -183,7 +201,7 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
   return (
     <div className="space-y-6 pb-8">
       {/* Stats cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {/* Total benefit */}
         <div className="card-dofus rounded-xl p-5">
           <p className="text-sm text-muted-foreground mb-1">Bénéfice total potentiel</p>
@@ -247,6 +265,7 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
               <TableHead className="text-foreground">Item</TableHead>
+              <TableHead className="text-center">Qté</TableHead>
               <TableHead
                 className="cursor-pointer hover:text-primary transition-colors"
                 onClick={() => toggleSort("costTotal")}
@@ -319,7 +338,10 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                         Niv. {result.item.level} • {result.item.type}
                       </p>
                     </div>
-                    <div className="ml-auto flex items-center gap-2">
+                  </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={includedIds.has(result.item.id)}
@@ -371,7 +393,6 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                         className="input-dofus w-16 h-9 rounded px-3 text-sm text-right bg-secondary/60 border border-border focus:border-primary focus-visible:ring-0"
                       />
                     </div>
-                  </div>
                   </TableCell>
                   <TableCell className="text-foreground">
                     {formatKamas(result.costTotal)}
@@ -429,7 +450,7 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                 {/* Expanded row - recipe details */}
                 {expandedRows.has(result.item.id) && (
                   <TableRow className="bg-secondary/30 border-border">
-                    <TableCell colSpan={6} className="py-4">
+                    <TableCell colSpan={7} className="py-4">
                       <div className="pl-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-muted-foreground">Recette de craft</p>
@@ -520,7 +541,21 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
           </div>
           <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
             {aggregatedResources.map((res) => (
-              <div key={res.id} className="flex items-center gap-3 rounded-lg border border-border bg-background/60 p-3">
+              <div
+                key={res.id}
+                onClick={() => {
+                  setAcknowledgedResourceIds((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(res.id)) next.delete(res.id);
+                    else next.add(res.id);
+                    return next;
+                  });
+                }}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg border border-border bg-background/60 p-3 cursor-pointer transition",
+                  acknowledgedResourceIds.has(res.id) && "opacity-50 grayscale"
+                )}
+              >
                 <img
                   src={res.iconUrl}
                   alt={res.name}

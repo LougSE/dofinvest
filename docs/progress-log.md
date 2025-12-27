@@ -41,4 +41,4 @@
 ## 2025-12-30
 - Quantités ajustables uniquement dans la page de résultats (plus de champs de quantité dans le panneau de sélection). Champ quantité re-stylé pour coller au thème.
 - Verrouillage des prix restauré dans le modal : les valeurs préremplies se verrouillent avec bouton “Modifier”, reset des locks à la fermeture.
-- Tri par défaut des coûts en décroissant : tableau des items, recettes détaillées et ressources agrégées affichent les coûts du plus élevé au plus faible.
+- Tri par défaut des coûts en décroissant : tableau des items, recettes détaillées et ressources agrégées affichent les coûts du plus élevé au plus faible. Par défaut la table classe sur la marge (%) en décroissant, avec colonne dédiée "Qté" (cases à cocher pour inclure). Les cartes de ressources agrégées sont cliquables pour griser/valider visuellement les ressources déjà achetées. Fix d’un crash de la page d’analyse (effet déplacé après calcul des ressources agrégées).
