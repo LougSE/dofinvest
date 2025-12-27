@@ -37,3 +37,8 @@
 - Prices: localStorage keys include dataset; on first Retro load, 2.0 prices are migrated once. Resource/item inputs lock only when explicitly set, not on first keystroke.
 - UI: resource & item price inputs lock/grayscale when prefills exist; “Modifier” unlocks them. Aggregated resources sortable and cost-colored.
 - Analysis table: per-item “Inclure” toggle to include/exclude items from aggregated resources; expanded recipes sortable by cost with red gradient; aggregated resources show total cost (red), sortable by cost.
+
+## 2025-12-30
+- Quantités ajustables uniquement dans la page de résultats (plus de champs de quantité dans le panneau de sélection). Champ quantité re-stylé pour coller au thème.
+- Verrouillage des prix restauré dans le modal : les valeurs préremplies se verrouillent avec bouton “Modifier”, reset des locks à la fermeture.
+- Tri par défaut des coûts en décroissant : tableau des items, recettes détaillées et ressources agrégées affichent les coûts du plus élevé au plus faible.

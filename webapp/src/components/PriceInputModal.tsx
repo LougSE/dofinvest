@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { DofusItem, Resource, RecipeIngredient } from "@/types/dofus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,7 @@ const PriceInputModal = ({
   const { resourcePrices, itemPrices, setResourcePrices, setItemPrices, savePrices, resetPrices } = usePrices(server, dataset);
   const [lockedResources, setLockedResources] = useState<Record<number, boolean>>({});
   const [lockedItems, setLockedItems] = useState<Record<number, boolean>>({});
+  const hasInitializedLocks = useRef(false);
 
   const aggregatedResources = useMemo(() => {
     try {
@@ -65,8 +66,28 @@ const PriceInputModal = ({
     if (!isOpen) {
       setLockedResources({});
       setLockedItems({});
+      hasInitializedLocks.current = false;
     }
   }, [isOpen]);
+
+  // Initialize locks from stored prices when opening
+  useEffect(() => {
+    if (!isOpen || hasInitializedLocks.current) return;
+    const resLocks: Record<number, boolean> = {};
+    Object.entries(resourcePrices || {}).forEach(([id, price]) => {
+      if ((price as number) > 0) resLocks[Number(id)] = true;
+    });
+    const itemLocks: Record<number, boolean> = {};
+    Object.entries(itemPrices || {}).forEach(([id, price]) => {
+      if ((price as number) > 0) itemLocks[Number(id)] = true;
+    });
+    if (Object.keys(resLocks).length === 0 && Object.keys(itemLocks).length === 0) {
+      return;
+    }
+    setLockedResources(resLocks);
+    setLockedItems(itemLocks);
+    hasInitializedLocks.current = true;
+  }, [isOpen, resourcePrices, itemPrices]);
 
   const isLockedResource = (id: number) => {
     const manual = lockedResources[id];

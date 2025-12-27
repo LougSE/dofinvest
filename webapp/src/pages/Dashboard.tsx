@@ -5,11 +5,8 @@ import ProfitabilityTable from "@/components/ProfitabilityTable";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { mockItems, mockPrices, mockHdvPrices } from "@/data/mockItems";
 import { ProfitabilityResult, Resource } from "@/types/dofus";
 import { Database, RefreshCw, Shield, Download } from "lucide-react";
-
-const demoItems = mockItems.slice(0, 5);
 
 const formatKamas = (value: number) => {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
@@ -17,60 +14,50 @@ const formatKamas = (value: number) => {
   return value.toLocaleString("fr-FR");
 };
 
-const buildResources = (): Resource[] => {
-  const map: Record<number, Resource> = {};
-
-  demoItems.forEach((item) => {
-    item.recipe?.forEach((ing) => {
-      if (map[ing.itemId]) {
-        map[ing.itemId].totalQuantity += ing.quantity;
-      } else {
-        map[ing.itemId] = {
-          id: ing.itemId,
-          name: ing.name,
-          iconUrl: ing.iconUrl,
-          totalQuantity: ing.quantity,
-          unitPrice: mockPrices[ing.itemId] || 0,
-          totalCost: (mockPrices[ing.itemId] || 0) * ing.quantity,
-        };
+const readLastAnalysis = () => {
+  // Try both datasets and pick the most recent (last written)
+  const datasets: ("20" | "129")[] = ["20", "129"];
+  let latest: { ts: number; data: any; dataset: "20" | "129" } | null = null;
+  datasets.forEach((ds) => {
+    const key = `dofinvest_last_analysis:Abrak:${ds}`;
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        const ts = parsed.timestamp || 0;
+        if (!latest || ts > latest.ts) {
+          latest = { ts, data: parsed, dataset: ds };
+        }
+      } catch (err) {
+        console.error("Failed to parse last analysis", err);
       }
-    });
+    }
   });
-
-  return Object.values(map).map((res) => ({
-    ...res,
-    totalCost: res.unitPrice * res.totalQuantity,
-  }));
-};
-
-const buildResults = (resources: Resource[]): ProfitabilityResult[] => {
-  return demoItems.map((item) => {
-    const itemResources = item.recipe?.map((ing) => {
-      const match = resources.find((r) => r.id === ing.itemId);
-      const unitPrice = match?.unitPrice || mockPrices[ing.itemId] || 0;
-      return {
-        id: ing.itemId,
-        name: match?.name || ing.name,
-        iconUrl: match?.iconUrl || ing.iconUrl,
-        unitPrice,
-        totalQuantity: ing.quantity,
-        totalCost: unitPrice * ing.quantity,
-      };
-    }) || [];
-
-    const costTotal = itemResources.reduce((sum, res) => sum + res.totalCost, 0);
-    const hdvPrice = mockHdvPrices[item.id] || 0;
-    const benefit = hdvPrice - costTotal;
-    const marginPercent = hdvPrice > 0 ? (benefit / hdvPrice) * 100 : 0;
-
-    return { item, costTotal, hdvPrice, benefit, marginPercent, resources: itemResources };
-  });
+  return latest;
 };
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const resources = useMemo(buildResources, []);
-  const results = useMemo(() => buildResults(resources), [resources]);
+  const last = useMemo(readLastAnalysis, []);
+
+  const results: ProfitabilityResult[] = last?.data?.results || [];
+
+  const resources: Resource[] = useMemo(() => {
+    const map = new Map<number, Resource & { name: string; iconUrl: string }>();
+    results.forEach((res) => {
+      res.resources.forEach((r) => {
+        const current = map.get(r.id);
+        const totalQuantity = (current?.totalQuantity || 0) + r.totalQuantity;
+        const unitPrice = r.unitPrice;
+        map.set(r.id, {
+          ...r,
+          totalQuantity,
+          totalCost: unitPrice * totalQuantity,
+        });
+      });
+    });
+    return Array.from(map.values());
+  }, [results]);
 
   const totalCost = resources.reduce((sum, res) => sum + res.totalCost, 0);
   const totalBenefit = results.reduce((sum, res) => sum + res.benefit, 0);
@@ -83,18 +70,20 @@ const Dashboard = () => {
         <section className="space-y-3">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-primary text-sm">
             <Database className="h-4 w-4" />
-            <span>Analyse prête — données mockées</span>
+            <span>
+              {last ? `Analyse chargée (${last.dataset})` : "Aucune analyse sauvegardée"}
+            </span>
           </div>
           <h2 className="text-3xl font-heading font-bold text-foreground">Tableau de bord rentabilité</h2>
           <p className="text-muted-foreground max-w-3xl">
-            Aperçu complet après saisie des prix: meilleures marges, coût global, ressources clés et export CSV. Cette page servira de base à l'intégration Dofapi et au cache local.
+            Aperçu basé sur la dernière analyse sauvegardée (sélection et prix saisis). Recalculez via l'analyse pour mettre à jour.
           </p>
           <div className="flex flex-wrap gap-3">
             <Badge variant="outline" className="border-primary/30 text-primary">
-              {demoItems.length} items analysés
+              {results.length} items analysés
             </Badge>
             <Badge variant="outline" className="border-border text-muted-foreground">
-              Cache local activé
+              {resources.length} ressources agrégées
             </Badge>
           </div>
         </section>
@@ -103,23 +92,23 @@ const Dashboard = () => {
           <div className="card-dofus rounded-xl p-5 space-y-2">
             <p className="text-sm text-muted-foreground">Bénéfice potentiel</p>
             <p className="text-3xl font-heading font-bold text-profit">{formatKamas(totalBenefit)} kamas</p>
-            <p className="text-xs text-muted-foreground">Inclut prix HDV moyen (mock)</p>
+            <p className="text-xs text-muted-foreground">Basé sur la dernière analyse</p>
           </div>
           <div className="card-dofus rounded-xl p-5 space-y-2">
             <p className="text-sm text-muted-foreground">Coût total des ressources</p>
-            <p className="text-3xl font-heading font-bold text-foreground">{formatKamas(totalCost)} kamas</p>
+            <p className="text-3xl font-heading font-bold text-loss">{formatKamas(totalCost)} kamas</p>
             <p className="text-xs text-muted-foreground">Ressources agrégées sur la sélection</p>
           </div>
           <div className="card-dofus rounded-xl p-5 space-y-3">
             <p className="text-sm text-muted-foreground">Actions rapides</p>
             <div className="flex flex-wrap gap-2">
-              <Button variant="limeOutline" className="gap-2">
-                <Download className="h-4 w-4" />
-                Export CSV
-              </Button>
-              <Button variant="outline" className="gap-2">
+              <Button variant="limeOutline" className="gap-2" onClick={() => navigate("/")}>
                 <RefreshCw className="h-4 w-4" />
-                Recalculer
+                Nouvelle analyse
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={() => navigate("/")}>
+                <Download className="h-4 w-4" />
+                Retour sélection
               </Button>
             </div>
           </div>
@@ -153,10 +142,13 @@ const Dashboard = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-muted-foreground">Total</p>
-                    <p className="font-semibold text-foreground">{formatKamas(res.totalCost)} kamas</p>
+                    <p className="font-semibold text-loss">{formatKamas(res.totalCost)} kamas</p>
                   </div>
                 </div>
               ))}
+              {resources.length === 0 && (
+                <p className="text-sm text-muted-foreground">Aucune ressource (pas d'analyse chargée)</p>
+              )}
             </div>
           </div>
 
@@ -165,14 +157,14 @@ const Dashboard = () => {
               <Shield className="h-4 w-4 text-primary" />
               <div>
                 <p className="text-sm font-semibold text-foreground">Cache & fallback</p>
-                <p className="text-xs text-muted-foreground">Prévu pour Dofapi + localStorage</p>
+                <p className="text-xs text-muted-foreground">Basé sur la dernière analyse sauvegardée</p>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              Cette section affichera l'état des données stockées (recettes, images, prix). Pour l'instant, elle simule un cache prêt à l'emploi et un mode offline activé.
+              Les données ci-dessus reflètent la dernière analyse (items/prix) enregistrée localement. Relancez une analyse pour mettre à jour ce tableau de bord.
             </p>
             <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-sm text-primary">
-              ✓ Recettes en cache • ✓ Images icônes • ✓ Prix HDV simulés
+              {last ? `Dataset ${last.dataset} • Cache local` : "Aucune analyse disponible"}
             </div>
             <Button variant="outline" className="w-full" onClick={() => navigate("/")}>
               Retour à la sélection

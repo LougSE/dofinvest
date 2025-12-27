@@ -24,16 +24,18 @@ interface ProfitabilityTableProps {
   results: ProfitabilityResult[];
   onBack: () => void;
   onSave?: () => void;
+  quantities: Record<number, number>;
+  onQuantityChange: (id: number, qty: number) => void;
 }
 
 type SortKey = "benefit" | "marginPercent" | "hdvPrice" | "costTotal";
 
-const ProfitabilityTable = ({ results, onBack, onSave }: ProfitabilityTableProps) => {
-  const [sortKey, setSortKey] = useState<SortKey>("benefit");
+const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityChange }: ProfitabilityTableProps) => {
+  const [sortKey, setSortKey] = useState<SortKey>("costTotal");
   const [sortDesc, setSortDesc] = useState(true);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [editableResults, setEditableResults] = useState<ProfitabilityResult[]>(results);
-  const [resourceSortDesc, setResourceSortDesc] = useState(false);
+  const [resourceSortDesc, setResourceSortDesc] = useState(true);
   const [includedIds, setIncludedIds] = useState<Set<number>>(new Set(results.map((r) => r.item.id)));
   const [expandedSortDesc, setExpandedSortDesc] = useState<Record<number, boolean>>({});
 
@@ -79,7 +81,11 @@ const ProfitabilityTable = ({ results, onBack, onSave }: ProfitabilityTableProps
   };
 
   const totalBenefit = editableResults.reduce((sum, r) => sum + r.benefit, 0);
-  const bestItem = sortedResults[0];
+  const bestItem = useMemo(() => {
+    if (!editableResults.length) return undefined;
+    return editableResults.reduce((best, cur) => (cur.benefit > (best?.benefit ?? -Infinity) ? cur : best),
+      undefined as ProfitabilityResult | undefined);
+  }, [editableResults]);
   const profitableCount = editableResults.filter((r) => r.benefit > 0).length;
 
   const handlePriceChange = (id: number, value: string) => {
@@ -87,9 +93,11 @@ const ProfitabilityTable = ({ results, onBack, onSave }: ProfitabilityTableProps
     setEditableResults((prev) =>
       prev.map((res) => {
         if (res.item.id !== id) return res;
+        const qty = res.quantity ?? quantities[id] ?? 1;
         const hdvPrice = clean;
-        const benefit = hdvPrice - res.costTotal;
-        const marginPercent = hdvPrice > 0 ? (benefit / hdvPrice) * 100 : 0;
+        const revenue = hdvPrice * qty;
+        const benefit = revenue - res.costTotal;
+        const marginPercent = revenue > 0 ? (benefit / revenue) * 100 : 0;
         return { ...res, hdvPrice, benefit, marginPercent };
       }),
     );
@@ -184,6 +192,14 @@ const ProfitabilityTable = ({ results, onBack, onSave }: ProfitabilityTableProps
             totalBenefit >= 0 ? "text-profit" : "text-loss"
           )}>
             {formatKamas(totalBenefit)} kamas
+          </p>
+        </div>
+
+        {/* Total cost */}
+        <div className="card-dofus rounded-xl p-5">
+          <p className="text-sm text-muted-foreground mb-1">Coût total des ressources</p>
+          <p className="text-2xl font-bold font-heading text-loss">
+            {formatKamas(aggregatedTotalCost)} kamas
           </p>
         </div>
 
@@ -282,11 +298,11 @@ const ProfitabilityTable = ({ results, onBack, onSave }: ProfitabilityTableProps
                   onClick={() => toggleRowExpand(result.item.id)}
                 >
                   <TableCell>
-                    <div className="flex items-center gap-3">
-                      {index === 0 && result.benefit > 0 && (
-                        <Trophy className="w-5 h-5 text-primary animate-pulse-lime" />
-                      )}
-                      <img
+                  <div className="flex items-center gap-3">
+                    {index === 0 && result.benefit > 0 && (
+                      <Trophy className="w-5 h-5 text-primary animate-pulse-lime" />
+                    )}
+                    <img
                         src={result.item.iconUrl}
                         alt={result.item.name}
                         className="w-10 h-10 rounded-lg"
@@ -297,30 +313,65 @@ const ProfitabilityTable = ({ results, onBack, onSave }: ProfitabilityTableProps
                           e.currentTarget.src = fallback;
                         }}
                       />
-                      <div>
-                        <p className="font-medium text-foreground">{result.item.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          Niv. {result.item.level} • {result.item.type}
-                        </p>
-                      </div>
-                      <div className="ml-auto flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={includedIds.has(result.item.id)}
-                          onClick={(e) => e.stopPropagation()}
-                          onChange={(e) => {
-                            setIncludedIds((prev) => {
-                              const next = new Set(prev);
-                              if (e.target.checked) next.add(result.item.id);
-                              else next.delete(result.item.id);
-                              return next;
-                            });
-                          }}
-                          className="h-4 w-4"
-                        />
-                        <span className="text-xs text-muted-foreground">Inclure</span>
-                      </div>
+                    <div>
+                      <p className="font-medium text-foreground">{result.item.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Niv. {result.item.level} • {result.item.type}
+                      </p>
                     </div>
+                    <div className="ml-auto flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={includedIds.has(result.item.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          setIncludedIds((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.add(result.item.id);
+                            else next.delete(result.item.id);
+                            return next;
+                          });
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-xs text-muted-foreground">Inclure</span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={result.quantity ?? quantities[result.item.id] ?? 1}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const newQty = Math.max(1, Number(e.target.value) || 1);
+                          const prevQty = result.quantity ?? quantities[result.item.id] ?? 1;
+                          const factor = newQty / prevQty;
+                          onQuantityChange(result.item.id, newQty);
+                          setEditableResults((prev) =>
+                            prev.map((r) => {
+                              if (r.item.id !== result.item.id) return r;
+                              const scaledResources = r.resources.map((res) => ({
+                                ...res,
+                                totalQuantity: res.totalQuantity * factor,
+                                totalCost: res.totalCost * factor,
+                              }));
+                              const costTotal = r.costTotal * factor;
+                              const revenue = r.hdvPrice * newQty;
+                              const benefit = revenue - costTotal;
+                              const marginPercent = revenue > 0 ? (benefit / revenue) * 100 : 0;
+                              return {
+                                ...r,
+                                quantity: newQty,
+                                resources: scaledResources,
+                                costTotal,
+                                benefit,
+                                marginPercent,
+                              };
+                            }),
+                          );
+                        }}
+                        className="input-dofus w-16 h-9 rounded px-3 text-sm text-right bg-secondary/60 border border-border focus:border-primary focus-visible:ring-0"
+                      />
+                    </div>
+                  </div>
                   </TableCell>
                   <TableCell className="text-foreground">
                     {formatKamas(result.costTotal)}
@@ -398,7 +449,7 @@ const ProfitabilityTable = ({ results, onBack, onSave }: ProfitabilityTableProps
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                           {(() => {
-                            const sortDesc = expandedSortDesc[result.item.id] || false;
+                          const sortDesc = expandedSortDesc[result.item.id] ?? true;
                             const sortedResources = [...result.resources].sort((a, b) => {
                               const diff = a.totalCost - b.totalCost;
                               return sortDesc ? -diff : diff;

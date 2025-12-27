@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { DofusItem, Resource, ProfitabilityResult } from "@/types/dofus";
 import { useItemsSearch } from "@/hooks/useItemsSearch";
 import Header from "@/components/Header";
@@ -11,6 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ViewState = "search" | "results";
@@ -19,14 +20,33 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [craftableOnly, setCraftableOnly] = useState(true);
   const [selectedItems, setSelectedItems] = useState<DofusItem[]>([]);
+  const [quantities, setQuantities] = useState<Record<number, number>>({});
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [viewState, setViewState] = useState<ViewState>("search");
   const [results, setResults] = useState<ProfitabilityResult[]>([]);
   const [datasetVersion, setDatasetVersion] = useState<"20" | "129">("20");
   const [savedAnalyses, setSavedAnalyses] = useState<
-    { id: string; name: string; date: string; items: DofusItem[]; results: ProfitabilityResult[] }
+    { id: string; name: string; date: string; items: DofusItem[]; results: ProfitabilityResult[]; dataset: "20" | "129" }
   >([]);
   const server = "Abrak";
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(`dofinvest_last_analysis:${server}:${datasetVersion}`);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setSelectedItems(parsed.items || []);
+        setResults(parsed.results || []);
+        const qtyMap: Record<number, number> = {};
+        (parsed.results || []).forEach((r: ProfitabilityResult) => {
+          qtyMap[r.item.id] = r.quantity ?? 1;
+        });
+        setQuantities(qtyMap);
+      }
+    } catch (err) {
+      console.error("Failed to load last analysis", err);
+    }
+  }, [server, datasetVersion]);
 
   const { items: searchResults, isLoading: isSearchLoading, error: searchError, isOfflineFallback, minQueryMet } = useItemsSearch({
     query: searchQuery,
@@ -48,6 +68,10 @@ const Index = () => {
         console.log("selection updated", { count: next.length, selectedIds: next.map((i) => i.id) });
         return next;
       });
+      setQuantities((prev) => {
+        if (prev[item.id]) return prev;
+        return { ...prev, [item.id]: 1 };
+      });
     } catch (err) {
       console.error("handleSelectItem failed", { err, item });
     }
@@ -55,10 +79,16 @@ const Index = () => {
 
   const handleRemoveItem = (item: DofusItem) => {
     setSelectedItems((prev) => prev.filter((i) => i.id !== item.id));
+    setQuantities((prev) => {
+      const next = { ...prev };
+      delete next[item.id];
+      return next;
+    });
   };
 
   const handleClearAll = () => {
     setSelectedItems([]);
+    setQuantities({});
   };
 
   const handleAnalyze = () => {
@@ -67,12 +97,17 @@ const Index = () => {
     setIsPriceModalOpen(true);
   };
 
+  const handleQuantityChange = (itemId: number, qty: number) => {
+    setQuantities((prev) => ({ ...prev, [itemId]: qty }));
+  };
+
   const handleConfirmPrices = (
     resources: Resource[],
     hdvPrices: { [key: number]: number }
   ) => {
     // Calculate profitability for each selected item
     const profitResults: ProfitabilityResult[] = selectedItems.map((item) => {
+      const qty = quantities[item.id] ?? 1;
       // Get resources for this specific item
       const itemResources = item.recipe?.map((ingredient) => {
         const resource = resources.find((r) => r.id === ingredient.itemId);
@@ -80,19 +115,21 @@ const Index = () => {
           id: ingredient.itemId,
           name: ingredient.name,
           iconUrl: ingredient.iconUrl,
-          totalQuantity: ingredient.quantity,
+          totalQuantity: ingredient.quantity * qty,
           unitPrice: resource?.unitPrice || 0,
-          totalCost: (resource?.unitPrice || 0) * ingredient.quantity,
+          totalCost: (resource?.unitPrice || 0) * ingredient.quantity * qty,
         };
       }) || [];
 
       const costTotal = itemResources.reduce((sum, r) => sum + r.totalCost, 0);
-      const hdvPrice = hdvPrices[item.id] || 0;
-      const benefit = hdvPrice - costTotal;
-      const marginPercent = hdvPrice > 0 ? (benefit / hdvPrice) * 100 : 0;
+      const hdvPrice = hdvPrices[item.id] || 0; // per item
+      const revenue = hdvPrice * qty;
+      const benefit = revenue - costTotal;
+      const marginPercent = revenue > 0 ? (benefit / revenue) * 100 : 0;
 
       return {
         item,
+        quantity: qty,
         costTotal,
         hdvPrice,
         benefit,
@@ -104,6 +141,15 @@ const Index = () => {
     setResults(profitResults);
     setViewState("results");
     setIsPriceModalOpen(false);
+
+    try {
+      localStorage.setItem(
+        `dofinvest_last_analysis:${server}:${datasetVersion}`,
+        JSON.stringify({ items: selectedItems, results: profitResults }),
+      );
+    } catch (err) {
+      console.error("Failed to persist last analysis", err);
+    }
   };
 
   const handleBackToSearch = () => {
@@ -231,11 +277,13 @@ const Index = () => {
             </div>
           ) : (
             <div className="space-y-6">
-              <ProfitabilityTable
-                results={results}
-                onBack={handleBackToSearch}
-                onSave={selectedItems.length > 0 && results.length > 0 ? handleSaveAnalysis : undefined}
-              />
+      <ProfitabilityTable
+        results={results}
+        onBack={handleBackToSearch}
+        onSave={selectedItems.length > 0 && results.length > 0 ? handleSaveAnalysis : undefined}
+        quantities={quantities}
+        onQuantityChange={handleQuantityChange}
+      />
 
               {savedAnalyses.length > 0 && (
                 <Card className="card-dofus">

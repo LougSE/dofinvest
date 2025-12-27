@@ -40,36 +40,36 @@ const SelectionPanel = ({
                 </button>
               </div>
 
-              {/* Items chips */}
-              <div className="flex flex-wrap gap-2 max-h-20 overflow-y-auto">
-                {selectedItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-full",
-                      "bg-secondary border border-border text-sm",
-                      "group hover:border-loss/50 transition-all"
-                    )}
+            {/* Items chips */}
+            <div className="flex flex-wrap gap-2 max-h-20 overflow-y-auto">
+              {selectedItems.map((item) => (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-1.5 rounded-full",
+                    "bg-secondary border border-border text-sm",
+                    "group hover:border-loss/50 transition-all"
+                  )}
+                >
+                  <img
+                    src={item.iconUrl}
+                    alt={item.name}
+                    className="w-5 h-5 rounded"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(item.name)}`;
+                      e.currentTarget.src = fallback;
+                    }}
+                  />
+                  <span className="text-foreground max-w-[120px] truncate">
+                    {item.name}
+                  </span>
+                  <button
+                    onClick={() => onRemoveItem(item)}
+                    className="text-muted-foreground hover:text-loss transition-colors"
                   >
-                    <img
-                      src={item.iconUrl}
-                      alt={item.name}
-                      className="w-5 h-5 rounded"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(item.name)}`;
-                        e.currentTarget.src = fallback;
-                      }}
-                    />
-                    <span className="text-foreground max-w-[120px] truncate">
-                      {item.name}
-                    </span>
-                    <button
-                      onClick={() => onRemoveItem(item)}
-                      className="text-muted-foreground hover:text-loss transition-colors"
-                    >
-                      <X className="w-4 h-4" />
+                    <X className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
