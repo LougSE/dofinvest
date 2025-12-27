@@ -10,9 +10,10 @@ export interface UseItemsSearchParams {
   craftableOnly?: boolean;
   page?: number;
   pageSize?: number;
+  dataset?: "20" | "129";
 }
 
-export function useItemsSearch({ query, craftableOnly = true, page = 1, pageSize = PAGE_SIZE }: UseItemsSearchParams) {
+export function useItemsSearch({ query, craftableOnly = true, page = 1, pageSize = PAGE_SIZE, dataset = "20" }: UseItemsSearchParams) {
   const [items, setItems] = useState<DofusItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +40,7 @@ export function useItemsSearch({ query, craftableOnly = true, page = 1, pageSize
         setHasMore(false);
         return;
       }
-      const results = await searchLocalItems({ query: effectiveQuery, craftableOnly });
+      const results = await searchLocalItems({ query: effectiveQuery, craftableOnly, dataset });
       setItems(results);
       setHasMore(false);
     } catch (err: any) {
@@ -62,7 +63,7 @@ export function useItemsSearch({ query, craftableOnly = true, page = 1, pageSize
       if (abortRef.current) abortRef.current.abort();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [effectiveQuery, craftableOnly, page, pageSize]);
+  }, [effectiveQuery, craftableOnly, page, pageSize, dataset]);
 
   const state = useMemo(
     () => ({ items, isLoading, error, hasMore, isOfflineFallback, minQueryMet }),

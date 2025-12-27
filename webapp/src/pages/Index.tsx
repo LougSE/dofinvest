@@ -7,7 +7,11 @@ import ItemGrid from "@/components/ItemGrid";
 import SelectionPanel from "@/components/SelectionPanel";
 import PriceInputModal from "@/components/PriceInputModal";
 import ProfitabilityTable from "@/components/ProfitabilityTable";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type ViewState = "search" | "results";
 
@@ -18,12 +22,17 @@ const Index = () => {
   const [isPriceModalOpen, setIsPriceModalOpen] = useState(false);
   const [viewState, setViewState] = useState<ViewState>("search");
   const [results, setResults] = useState<ProfitabilityResult[]>([]);
+  const [datasetVersion, setDatasetVersion] = useState<"20" | "129">("20");
+  const [savedAnalyses, setSavedAnalyses] = useState<
+    { id: string; name: string; date: string; items: DofusItem[]; results: ProfitabilityResult[] }
+  >([]);
   const server = "Abrak";
 
   const { items: searchResults, isLoading: isSearchLoading, error: searchError, isOfflineFallback, minQueryMet } = useItemsSearch({
     query: searchQuery,
     craftableOnly,
     page: 1,
+    dataset: datasetVersion,
   });
 
   // Filter items based on search and craftable filter
@@ -99,8 +108,14 @@ const Index = () => {
 
   const handleBackToSearch = () => {
     setViewState("search");
-    setSelectedItems([]);
     setResults([]);
+  };
+
+  const handleSaveAnalysis = () => {
+    const id = `${Date.now()}`;
+    const name = `Analyse ${savedAnalyses.length + 1}`;
+    const date = new Date().toLocaleString();
+    setSavedAnalyses((prev) => [...prev, { id, name, date, items: selectedItems, results }]);
   };
 
   return (
@@ -132,13 +147,28 @@ const Index = () => {
                 </p>
               </section>
 
-              {/* Search */}
-              <SearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
-                onFilterCraftable={setCraftableOnly}
-                craftableOnly={craftableOnly}
-              />
+              {/* Dataset & Search */}
+              <div className="grid gap-4 md:grid-cols-[240px,1fr] items-start">
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Version du jeu</p>
+                  <Select value={datasetVersion} onValueChange={(v) => setDatasetVersion(v as "20" | "129") }>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choisir la version" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="20">Dofus 2.0</SelectItem>
+                      <SelectItem value="129">Dofus 1.29 (Retro)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <SearchBar
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  onFilterCraftable={setCraftableOnly}
+                  craftableOnly={craftableOnly}
+                />
+              </div>
 
               {!minQueryMet && (
                 <p className="text-center text-sm text-muted-foreground">
@@ -192,6 +222,7 @@ const Index = () => {
                   selectedItems={selectedItems}
                   onConfirm={handleConfirmPrices}
                   server={server}
+                  dataset={datasetVersion}
                 />
               )}
 
@@ -199,7 +230,48 @@ const Index = () => {
               {selectedItems.length > 0 && <div className="h-32" />}
             </div>
           ) : (
-            <ProfitabilityTable results={results} onBack={handleBackToSearch} />
+            <div className="space-y-6">
+              <ProfitabilityTable
+                results={results}
+                onBack={handleBackToSearch}
+                onSave={selectedItems.length > 0 && results.length > 0 ? handleSaveAnalysis : undefined}
+              />
+
+              {savedAnalyses.length > 0 && (
+                <Card className="card-dofus">
+                  <CardHeader>
+                    <CardTitle className="text-foreground">Analyses sauvegardées</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {savedAnalyses.map((a) => (
+                      <div
+                        key={a.id}
+                        className="p-3 rounded-lg border border-border bg-background/50 space-y-1"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-foreground">{a.name}</span>
+                          <span className="text-xs text-muted-foreground">{a.date}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {a.items.length} items • {a.results.length} résultats
+                        </p>
+                        <Separator className="my-2" />
+                        <div className="flex flex-wrap gap-2">
+                          {a.items.map((item) => (
+                            <span
+                              key={item.id}
+                              className="px-2 py-1 text-xs rounded-full bg-secondary/60 border border-border text-foreground"
+                            >
+                              {item.name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
         </main>
 

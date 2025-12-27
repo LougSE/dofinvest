@@ -2,15 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { RecipeIngredient } from "@/types/dofus";
 import { getLocalRecipe } from "@/lib/localDataClient";
 
-const CACHE_PREFIX = "dofinvest_recipe_v1:";
+const CACHE_PREFIX = "dofinvest_recipe_v2:";
 const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_CONCURRENT = 4;
 
 type RecipeMap = Record<number, RecipeIngredient[]>;
 
-function readCache(id: number): RecipeIngredient[] | null {
+function readCache(dataset: "20" | "129", id: number): RecipeIngredient[] | null {
   try {
-    const raw = localStorage.getItem(`${CACHE_PREFIX}${id}`);
+    const raw = localStorage.getItem(`${CACHE_PREFIX}${dataset}:${id}`);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed?.timestamp || !parsed?.recipe) return null;
@@ -22,12 +22,9 @@ function readCache(id: number): RecipeIngredient[] | null {
   }
 }
 
-function writeCache(id: number, recipe: RecipeIngredient[]) {
+function writeCache(dataset: "20" | "129", id: number, recipe: RecipeIngredient[]) {
   try {
-    localStorage.setItem(
-      `${CACHE_PREFIX}${id}`,
-      JSON.stringify({ recipe, timestamp: Date.now() }),
-    );
+    localStorage.setItem(`${CACHE_PREFIX}${dataset}:${id}`, JSON.stringify({ recipe, timestamp: Date.now() }));
   } catch (err) {
     console.error("Recipe cache write error", err);
   }
@@ -53,10 +50,14 @@ async function fetchWithLimit<T>(
   return results;
 }
 
-export function useRecipes(itemIds: number[]) {
+export function useRecipes(itemIds: number[], dataset: "20" | "129" = "20") {
   const [recipes, setRecipes] = useState<RecipeMap>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRecipes({});
+  }, [dataset]);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,10 +72,10 @@ export function useRecipes(itemIds: number[]) {
     }
 
     const tasks: Array<() => Promise<{ id: number; recipe: RecipeIngredient[] }>> = uniqueIds.map((id) => async () => {
-      const cached = readCache(id);
+      const cached = readCache(dataset, id);
       if (cached) return { id, recipe: cached };
-      const fetched = await getLocalRecipe(id);
-      writeCache(id, fetched);
+      const fetched = await getLocalRecipe(id, dataset);
+      writeCache(dataset, id, fetched);
       return { id, recipe: fetched };
     });
 

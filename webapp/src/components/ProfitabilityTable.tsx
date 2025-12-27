@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ProfitabilityResult } from "@/types/dofus";
+import { useEffect, useMemo, useState } from "react";
+import { ProfitabilityResult, Resource } from "@/types/dofus";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -23,16 +23,26 @@ import { cn } from "@/lib/utils";
 interface ProfitabilityTableProps {
   results: ProfitabilityResult[];
   onBack: () => void;
+  onSave?: () => void;
 }
 
 type SortKey = "benefit" | "marginPercent" | "hdvPrice" | "costTotal";
 
-const ProfitabilityTable = ({ results, onBack }: ProfitabilityTableProps) => {
+const ProfitabilityTable = ({ results, onBack, onSave }: ProfitabilityTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("benefit");
   const [sortDesc, setSortDesc] = useState(true);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [editableResults, setEditableResults] = useState<ProfitabilityResult[]>(results);
+  const [resourceSortDesc, setResourceSortDesc] = useState(false);
+  const [includedIds, setIncludedIds] = useState<Set<number>>(new Set(results.map((r) => r.item.id)));
+  const [expandedSortDesc, setExpandedSortDesc] = useState<Record<number, boolean>>({});
 
-  const sortedResults = [...results].sort((a, b) => {
+  useEffect(() => {
+    setEditableResults(results);
+    setIncludedIds(new Set(results.map((r) => r.item.id)));
+  }, [results]);
+
+  const sortedResults = [...editableResults].sort((a, b) => {
     const multiplier = sortDesc ? -1 : 1;
     return (a[sortKey] - b[sortKey]) * multiplier;
   });
@@ -68,9 +78,79 @@ const ProfitabilityTable = ({ results, onBack }: ProfitabilityTableProps) => {
     return value.toLocaleString("fr-FR");
   };
 
-  const totalBenefit = results.reduce((sum, r) => sum + r.benefit, 0);
+  const totalBenefit = editableResults.reduce((sum, r) => sum + r.benefit, 0);
   const bestItem = sortedResults[0];
-  const profitableCount = results.filter((r) => r.benefit > 0).length;
+  const profitableCount = editableResults.filter((r) => r.benefit > 0).length;
+
+  const handlePriceChange = (id: number, value: string) => {
+    const clean = parseInt(value.replace(/\D/g, "")) || 0;
+    setEditableResults((prev) =>
+      prev.map((res) => {
+        if (res.item.id !== id) return res;
+        const hdvPrice = clean;
+        const benefit = hdvPrice - res.costTotal;
+        const marginPercent = hdvPrice > 0 ? (benefit / hdvPrice) * 100 : 0;
+        return { ...res, hdvPrice, benefit, marginPercent };
+      }),
+    );
+  };
+
+  const aggregatedResources = useMemo(() => {
+    const map = new Map<number, Resource & { name: string; iconUrl: string }>();
+    editableResults.forEach((res) => {
+      if (!includedIds.has(res.item.id)) return;
+      res.resources.forEach((r) => {
+        const current = map.get(r.id);
+        const totalQuantity = (current?.totalQuantity || 0) + r.totalQuantity;
+        const unitPrice = r.unitPrice;
+        map.set(r.id, {
+          ...r,
+          totalQuantity,
+          totalCost: unitPrice * totalQuantity,
+        });
+      });
+    });
+    const arr = Array.from(map.values());
+    arr.sort((a, b) => {
+      const diff = a.totalCost - b.totalCost;
+      if (diff !== 0) return diff;
+      return a.totalQuantity - b.totalQuantity;
+    });
+    return resourceSortDesc ? arr.reverse() : arr;
+  }, [editableResults, resourceSortDesc, includedIds]);
+
+  const aggregatedTotalCost = useMemo(
+    () => aggregatedResources.reduce((sum, r) => sum + r.totalCost, 0),
+    [aggregatedResources],
+  );
+
+  const computeExpandedCostStyle = (resources: Resource[]) => {
+    const max = resources.reduce((m, r) => Math.max(m, r.totalCost), 0);
+    return (cost: number) => {
+      if (max <= 0) return { color: "hsl(var(--loss))" };
+      const ratio = Math.min(1, cost / max);
+      const start = [245, 210, 210];
+      const end = [220, 38, 38];
+      const mix = (a: number, b: number) => Math.round(a + (b - a) * ratio);
+      const [r, g, b] = [mix(start[0], end[0]), mix(start[1], end[1]), mix(start[2], end[2])];
+      return { color: `rgb(${r}, ${g}, ${b})` };
+    };
+  };
+
+  const maxResourceCost = useMemo(() => {
+    return aggregatedResources.reduce((max, r) => Math.max(max, r.totalCost), 0);
+  }, [aggregatedResources]);
+
+  const costColorStyle = (cost: number) => {
+    if (maxResourceCost <= 0) return { color: "hsl(var(--loss))" };
+    const ratio = Math.min(1, cost / maxResourceCost);
+    // Map ratio to a two-stop gradient: light loss → full loss
+    const start = [245, 210, 210]; // light red/pink
+    const end = [220, 38, 38]; // darker red
+    const mix = (a: number, b: number) => Math.round(a + (b - a) * ratio);
+    const [r, g, b] = [mix(start[0], end[0]), mix(start[1], end[1]), mix(start[2], end[2])];
+    return { color: `rgb(${r}, ${g}, ${b})` };
+  };
 
   const exportToCsv = () => {
     const headers = ["Item", "Niveau", "Coût Total", "Prix HDV", "Bénéfice", "Marge %"];
@@ -130,15 +210,20 @@ const ProfitabilityTable = ({ results, onBack }: ProfitabilityTableProps) => {
       </div>
 
       {/* Actions */}
-      <div className="flex flex-wrap gap-3">
-        <Button variant="outline" onClick={onBack}>
-          ← Nouvelle analyse
-        </Button>
-        <Button variant="limeOutline" onClick={exportToCsv} className="gap-2">
-          <Download className="w-4 h-4" />
-          Exporter CSV
-        </Button>
-      </div>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="outline" onClick={onBack}>
+            ← Nouvelle analyse
+          </Button>
+          <Button variant="limeOutline" onClick={exportToCsv} className="gap-2">
+            <Download className="w-4 h-4" />
+            Exporter CSV
+          </Button>
+          {onSave && (
+            <Button variant="lime" onClick={onSave} className="gap-2">
+              Sauvegarder l'analyse
+            </Button>
+          )}
+        </div>
 
       {/* Table */}
       <div className="card-dofus rounded-xl overflow-hidden">
@@ -218,13 +303,36 @@ const ProfitabilityTable = ({ results, onBack }: ProfitabilityTableProps) => {
                           Niv. {result.item.level} • {result.item.type}
                         </p>
                       </div>
+                      <div className="ml-auto flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={includedIds.has(result.item.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => {
+                            setIncludedIds((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(result.item.id);
+                              else next.delete(result.item.id);
+                              return next;
+                            });
+                          }}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-xs text-muted-foreground">Inclure</span>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell className="text-foreground">
                     {formatKamas(result.costTotal)}
                   </TableCell>
                   <TableCell className="text-primary font-medium">
-                    {formatKamas(result.hdvPrice)}
+                    <input
+                      type="text"
+                      value={formatKamas(result.hdvPrice)}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => handlePriceChange(result.item.id, e.target.value)}
+                      className="w-24 bg-transparent border border-border rounded px-2 py-1 text-primary text-right text-sm focus:outline-none focus:border-primary"
+                    />
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -271,38 +379,64 @@ const ProfitabilityTable = ({ results, onBack }: ProfitabilityTableProps) => {
                 {expandedRows.has(result.item.id) && (
                   <TableRow className="bg-secondary/30 border-border">
                     <TableCell colSpan={6} className="py-4">
-                      <div className="pl-4">
-                        <p className="text-sm font-medium text-muted-foreground mb-3">
-                          Recette de craft:
-                        </p>
+                      <div className="pl-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-muted-foreground">Recette de craft</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedSortDesc((prev) => ({
+                                ...prev,
+                                [result.item.id]: !prev[result.item.id],
+                              }));
+                            }}
+                          >
+                            Trier par coût {expandedSortDesc[result.item.id] ? "↓" : "↑"}
+                          </Button>
+                        </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                          {result.resources.map((res) => (
-                            <div
-                              key={res.id}
-                              className="flex items-center gap-2 p-2 rounded-lg bg-background/50"
-                            >
-                              <img
-                                src={res.iconUrl}
-                                alt={res.name}
-                                className="w-8 h-8 rounded"
-                                referrerPolicy="no-referrer"
-                                onError={(e) => {
-                                  e.currentTarget.onerror = null;
-                                  const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(res.name)}`;
-                                  e.currentTarget.src = fallback;
-                                }}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs text-foreground truncate">
-                                  {res.name}
-                                </p>
-                              <p className="text-xs text-muted-foreground">
-                                {res.totalQuantity} × {formatKamas(res.unitPrice)} ={" "}
-                                <span className="text-primary">{formatKamas(res.totalCost)}</span>
-                              </p>
-                            </div>
-                          </div>
-                        ))}
+                          {(() => {
+                            const sortDesc = expandedSortDesc[result.item.id] || false;
+                            const sortedResources = [...result.resources].sort((a, b) => {
+                              const diff = a.totalCost - b.totalCost;
+                              return sortDesc ? -diff : diff;
+                            });
+                            const colorFn = computeExpandedCostStyle(sortedResources);
+                            return sortedResources.map((res) => (
+                              <div
+                                key={res.id}
+                                className="flex items-center gap-2 p-2 rounded-lg bg-background/50"
+                              >
+                                <img
+                                  src={res.iconUrl}
+                                  alt={res.name}
+                                  className="w-8 h-8 rounded"
+                                  referrerPolicy="no-referrer"
+                                  onError={(e) => {
+                                    e.currentTarget.onerror = null;
+                                    const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(res.name)}`;
+                                    e.currentTarget.src = fallback;
+                                  }}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs text-foreground truncate">
+                                    {res.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {res.totalQuantity} × {formatKamas(res.unitPrice)}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-xs text-muted-foreground">Coût</p>
+                                  <p className="text-sm font-semibold" style={colorFn(res.totalCost)}>
+                                    {formatKamas(res.totalCost)}
+                                  </p>
+                                </div>
+                              </div>
+                            ));
+                          })()}
                         </div>
                       </div>
                     </TableCell>
@@ -313,6 +447,55 @@ const ProfitabilityTable = ({ results, onBack }: ProfitabilityTableProps) => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Aggregated resources summary */}
+      {aggregatedResources.length > 0 && (
+        <div className="card-dofus rounded-xl p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-foreground">Ressources totales à acheter</h3>
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground">{aggregatedResources.length} ressources</span>
+              <span className="text-sm font-semibold text-loss">
+                Total: {formatKamas(aggregatedTotalCost)} kamas
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setResourceSortDesc((prev) => !prev)}
+              >
+                Trier par coût {resourceSortDesc ? "↓" : "↑"}
+              </Button>
+            </div>
+          </div>
+          <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+            {aggregatedResources.map((res) => (
+              <div key={res.id} className="flex items-center gap-3 rounded-lg border border-border bg-background/60 p-3">
+                <img
+                  src={res.iconUrl}
+                  alt={res.name}
+                  className="h-10 w-10 rounded"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(res.name)}`;
+                    e.currentTarget.src = fallback;
+                  }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground truncate">{res.name}</p>
+                  <p className="text-sm font-semibold text-primary">{res.totalQuantity} unités</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">Coût total</p>
+                  <p className="font-semibold" style={costColorStyle(res.totalCost)}>
+                    {formatKamas(res.totalCost)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

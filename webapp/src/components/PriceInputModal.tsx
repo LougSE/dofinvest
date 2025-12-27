@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { DofusItem, Resource, RecipeIngredient } from "@/types/dofus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import {
 import { Coins, ArrowRight, Package } from "lucide-react";
 import { useRecipes } from "@/hooks/useRecipes";
 import { usePrices } from "@/hooks/usePrices";
+import { cn } from "@/lib/utils";
 
 interface PriceInputModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface PriceInputModalProps {
   selectedItems: DofusItem[];
   onConfirm: (resources: Resource[], hdvPrices: { [key: number]: number }) => void;
   server: string;
+  dataset: "20" | "129";
 }
 
 const PriceInputModal = ({
@@ -27,11 +29,14 @@ const PriceInputModal = ({
   selectedItems,
   onConfirm,
   server,
+  dataset,
 }: PriceInputModalProps) => {
   const [step, setStep] = useState<"resources" | "hdv">("resources");
   const itemIds = useMemo(() => Array.from(new Set(selectedItems.map((item) => item.id))).filter(Boolean), [selectedItems]);
-  const { recipes, isLoading: recipesLoading } = useRecipes(itemIds);
-  const { resourcePrices, itemPrices, setResourcePrices, setItemPrices, savePrices, resetPrices } = usePrices(server);
+  const { recipes, isLoading: recipesLoading } = useRecipes(itemIds, dataset);
+  const { resourcePrices, itemPrices, setResourcePrices, setItemPrices, savePrices, resetPrices } = usePrices(server, dataset);
+  const [lockedResources, setLockedResources] = useState<Record<number, boolean>>({});
+  const [lockedItems, setLockedItems] = useState<Record<number, boolean>>({});
 
   const aggregatedResources = useMemo(() => {
     try {
@@ -55,12 +60,34 @@ const PriceInputModal = ({
 
   const resourceList = Object.values(aggregatedResources);
 
+  // Reset locks when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setLockedResources({});
+      setLockedItems({});
+    }
+  }, [isOpen]);
+
+  const isLockedResource = (id: number) => {
+    const manual = lockedResources[id];
+    if (manual !== undefined) return manual;
+    return false;
+  };
+
+  const isLockedItem = (id: number) => {
+    const manual = lockedItems[id];
+    if (manual !== undefined) return manual;
+    return false;
+  };
+
   const handleResourcePriceChange = (id: number, value: string) => {
+    if (isLockedResource(id)) return;
     const numValue = parseInt(value.replace(/\D/g, "")) || 0;
     setResourcePrices((prev) => ({ ...prev, [id]: numValue }));
   };
 
   const handleHdvPriceChange = (id: number, value: string) => {
+    if (isLockedItem(id)) return;
     const numValue = parseInt(value.replace(/\D/g, "")) || 0;
     setItemPrices((prev) => ({ ...prev, [id]: numValue }));
   };
@@ -141,18 +168,40 @@ const PriceInputModal = ({
                       Quantité totale: {res.totalQty}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="text"
-                    value={formatKamas(resourcePrices[res.itemId] ?? 0)}
-                    onChange={(e) => handleResourcePriceChange(res.itemId, e.target.value)}
-                    className="w-28 text-right input-dofus"
-                  />
-                    <span className="text-xs text-primary">k</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {(() => {
+                      const isLocked = isLockedResource(res.itemId);
+                      return (
+                        <>
+                          <Input
+                            type="text"
+                            value={formatKamas(resourcePrices[res.itemId] ?? 0)}
+                            onChange={(e) => handleResourcePriceChange(res.itemId, e.target.value)}
+                            className={cn(
+                              "w-28 text-right input-dofus",
+                              isLocked && "bg-muted text-muted-foreground cursor-not-allowed"
+                            )}
+                            readOnly={isLocked}
+                          />
+                          <span className="text-xs text-primary">k</span>
+                          {isLocked && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setLockedResources((prev) => ({ ...prev, [res.itemId]: false }));
+                              }}
+                            >
+                              Modifier
+                            </Button>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                   <div className="text-right min-w-[100px]">
                     <p className="text-sm font-medium text-foreground">
-                      {formatKamas((resourcePrices[res.itemId] || 0) * res.totalQty)} k
+                      {formatKamas((resourcePrices[res.itemId] ?? 0) * res.totalQty)}
                     </p>
                     <p className="text-xs text-muted-foreground">Total</p>
                   </div>
@@ -188,15 +237,36 @@ const PriceInputModal = ({
                       Niv. {item.level} • {item.type}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">Prix HDV:</span>
-                    <Input
-                      type="text"
-                    value={formatKamas(itemPrices[item.id] ?? 0)}
-                    onChange={(e) => handleHdvPriceChange(item.id, e.target.value)}
-                    className="w-36 text-right input-dofus"
-                  />
-                    <span className="text-xs text-primary">k</span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {(() => {
+                      const isLocked = isLockedItem(item.id);
+                      return (
+                        <>
+                          <Input
+                            type="text"
+                            value={formatKamas(itemPrices[item.id] ?? 0)}
+                            onChange={(e) => handleHdvPriceChange(item.id, e.target.value)}
+                            className={cn(
+                              "w-36 text-right input-dofus",
+                              isLocked && "bg-muted text-muted-foreground cursor-not-allowed"
+                            )}
+                            readOnly={isLocked}
+                          />
+                          <span className="text-xs text-primary">k</span>
+                          {isLocked && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setLockedItems((prev) => ({ ...prev, [item.id]: false }));
+                              }}
+                            >
+                              Modifier
+                            </Button>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ))}
@@ -235,11 +305,11 @@ const PriceInputModal = ({
                 Calculer la rentabilité
               </Button>
             )}
-            <Button
-              variant="outline"
-              onClick={() => {
-                resetPrices();
-                setResourcePrices({});
+              <Button
+                variant="outline"
+                onClick={() => {
+                  resetPrices();
+                  setResourcePrices({});
                 setItemPrices({});
               }}
               className="flex-1"

@@ -1,24 +1,27 @@
 import { DofusItem, RecipeIngredient } from "@/types/dofus";
 
-let dataCache: DofusItem[] | null = null;
+const caches: Record<string, DofusItem[] | null> = {};
 
-async function loadData(): Promise<DofusItem[]> {
-  if (dataCache) return dataCache;
-  const response = await fetch("/data/items.json");
+async function loadData(dataset: "20" | "129" = "20"): Promise<DofusItem[]> {
+  if (caches[dataset]) return caches[dataset] as DofusItem[];
+  const path = dataset === "129" ? "/data/items-129.json" : "/data/items.json";
+  const response = await fetch(path);
   if (!response.ok) throw new Error("Failed to load local items");
   const json = await response.json();
-  dataCache = json as DofusItem[];
-  return dataCache;
+  caches[dataset] = json as DofusItem[];
+  return caches[dataset] as DofusItem[];
 }
 
 export async function searchLocalItems({
   query,
   craftableOnly,
+  dataset = "20",
 }: {
   query: string;
   craftableOnly?: boolean;
+  dataset?: "20" | "129";
 }): Promise<DofusItem[]> {
-  const data = await loadData();
+  const data = await loadData(dataset);
   const q = query.trim().toLowerCase();
   const filtered = data.filter((item) => {
     if (craftableOnly && !item.isCraftable) return false;
@@ -28,8 +31,8 @@ export async function searchLocalItems({
   return filtered;
 }
 
-export async function getLocalRecipe(id: number): Promise<RecipeIngredient[]> {
-  const data = await loadData();
+export async function getLocalRecipe(id: number, dataset: "20" | "129" = "20"): Promise<RecipeIngredient[]> {
+  const data = await loadData(dataset);
   const item = data.find((it) => it.id === id);
   return item?.recipe || [];
 }

@@ -15,3 +15,25 @@
 - Removed search pagination slice (all matches returned; no hidden items).
 - Fixed price modal state usage (`itemPrices`), so stored prices persist across openings.
 - Added instructions in `webapp/README.md` for regenerating `items.json` from the crawlit dump without committing the source repo.
+
+## 2025-12-27
+- Icons: confirmed Ankama CDN unreachable; decided to ship type-based local icons as interim (arc, épée/dague, chapeau, cape, anneau, amulette, ceinture, bottes, baguette, bâton, ressource, default). `items.json` now references local icons; external fetch errors resolved.
+- Search: removed result slicing; all matches shown. Minimum 2 chars kept to avoid huge renders.
+- Analysis table: added inline editable HDV prices, recalculating benefit/margin in place. Added aggregated resources summary with cost-based gradient and sortable cost order.
+- Modal: fixed undefined `hdvPrices`, ensured dialog description, avoided remount loops; price inputs respect stored values. Price reset available.
+- Data source: kept crawlit repo ignored via `.gitignore`; `items.json` regenerated without bundling source repo. README documents regeneration steps.
+- Outstanding: real icons require a working CDN or bundling actual assets; type icons remain the fallback until a live source is provided.
+
+## 2025-12-28
+- Resource prices modal: prefills now lock inputs when a cached price exists; “Modifier” unlocks them. Locked fields are visually grayed. Lock state resets on close but honors manual unlock while open.
+- Aggregated resources: cost gradient tweaked; quantities emphasized; sorting toggle by cost (asc/desc).
+- Saved analyses: button in the results view to save the current analysis and list saved entries (in-session) with items and timestamps.
+- Fixed crashes: removed duplicate helpers, added missing imports (`cn`), builds clean.
+
+## 2025-12-29
+- Added Retro dataset switch: dropdown to choose Dofus 2.0 vs 1.29. Search and recipes load from `items.json` (2.0) or `items-129.json` (Retro) via dataset-aware hooks/client.
+- Normalized Retro dataset from `scrapstuff/fetched_data/items.json` into `items-129.json` (type icons, hashed ids, 1,286 craftables). Added La Baguette des Limbes with Retro recipe.
+- Recipes now cache per dataset (`dofinvest_recipe_v2:`) to avoid cross-version contamination; cache resets when switching versions.
+- Prices: localStorage keys include dataset; on first Retro load, 2.0 prices are migrated once. Resource/item inputs lock only when explicitly set, not on first keystroke.
+- UI: resource & item price inputs lock/grayscale when prefills exist; “Modifier” unlocks them. Aggregated resources sortable and cost-colored.
+- Analysis table: per-item “Inclure” toggle to include/exclude items from aggregated resources; expanded recipes sortable by cost with red gradient; aggregated resources show total cost (red), sortable by cost.
