@@ -157,6 +157,16 @@
     @apply bg-muted border-border focus:border-primary focus:ring-1 focus:ring-primary transition-all duration-200;
   }
 
+  .no-spin {
+    -moz-appearance: textfield;
+  }
+
+  .no-spin::-webkit-outer-spin-button,
+  .no-spin::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
   .btn-lime {
     background: var(--gradient-lime);
     @apply text-primary-foreground font-semibold shadow-lg transition-all duration-300 rounded-full;

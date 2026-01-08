@@ -25,6 +25,7 @@ const Index = () => {
   const [viewState, setViewState] = useState<ViewState>("search");
   const [results, setResults] = useState<ProfitabilityResult[]>([]);
   const [datasetVersion, setDatasetVersion] = useState<"20" | "129">("20");
+  const [tagFilter, setTagFilter] = useState("");
   const [savedAnalyses, setSavedAnalyses] = useState<
     { id: string; name: string; date: string; items: DofusItem[]; results: ProfitabilityResult[]; dataset: "20" | "129" }
   >([]);
@@ -57,8 +58,10 @@ const Index = () => {
 
   // Filter items based on search and craftable filter
   const filteredItems = useMemo(() => {
-    return searchResults;
-  }, [searchResults]);
+    const tag = tagFilter.trim().toLowerCase();
+    if (!tag) return searchResults;
+    return searchResults.filter((item) => item.type.toLowerCase().includes(tag));
+  }, [searchResults, tagFilter]);
 
   const handleSelectItem = (item: DofusItem) => {
     try {
@@ -194,7 +197,7 @@ const Index = () => {
               </section>
 
               {/* Dataset & Search */}
-              <div className="grid gap-4 md:grid-cols-[240px,1fr] items-start">
+              <div className="grid gap-4 md:grid-cols-3 items-start">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Version du jeu</p>
                   <Select value={datasetVersion} onValueChange={(v) => setDatasetVersion(v as "20" | "129") }>
@@ -206,6 +209,16 @@ const Index = () => {
                       <SelectItem value="129">Dofus 1.29 (Retro)</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground">Filtre par type / tag</p>
+                  <Input
+                    placeholder="Ex: amulette, ressource, cape"
+                    value={tagFilter}
+                    onChange={(e) => setTagFilter(e.target.value)}
+                    className="input-dofus"
+                  />
                 </div>
 
                 <SearchBar

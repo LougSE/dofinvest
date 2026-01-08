@@ -59,8 +59,6 @@ const PriceInputModal = ({
     }
   }, [recipes, selectedItems]);
 
-  const resourceList = Object.values(aggregatedResources);
-
   // Reset locks when modal closes
   useEffect(() => {
     if (!isOpen) {
@@ -100,6 +98,25 @@ const PriceInputModal = ({
     if (manual !== undefined) return manual;
     return false;
   };
+
+  const resourceList = Object.values(aggregatedResources);
+  const sortedResourceList = useMemo(() => {
+    return [...resourceList].sort((a, b) => {
+      const lockedA = isLockedResource(a.itemId) ? 1 : 0;
+      const lockedB = isLockedResource(b.itemId) ? 1 : 0;
+      if (lockedA !== lockedB) return lockedA - lockedB; // unlocked first
+      return a.name.localeCompare(b.name);
+    });
+  }, [resourceList, lockedResources]);
+
+  const sortedItems = useMemo(() => {
+    return [...selectedItems].sort((a, b) => {
+      const lockedA = isLockedItem(a.id) ? 1 : 0;
+      const lockedB = isLockedItem(b.id) ? 1 : 0;
+      if (lockedA !== lockedB) return lockedA - lockedB; // unlocked first
+      return a.name.localeCompare(b.name);
+    });
+  }, [selectedItems, lockedItems]);
 
   const handleResourcePriceChange = (id: number, value: string) => {
     if (isLockedResource(id)) return;
@@ -167,7 +184,7 @@ const PriceInputModal = ({
         <div className="overflow-y-auto max-h-[50vh] pr-2">
           {step === "resources" ? (
             <div className="space-y-3">
-              {resourceList.map((res) => (
+              {sortedResourceList.map((res) => (
                 <div
                   key={res.itemId}
                   className="flex items-center gap-4 p-3 rounded-lg bg-secondary/50 border border-border"
@@ -236,7 +253,7 @@ const PriceInputModal = ({
             </div>
           ) : (
             <div className="space-y-3">
-              {selectedItems.map((item) => (
+              {sortedItems.map((item) => (
                 <div
                   key={item.id}
                   className="flex items-center gap-4 p-3 rounded-lg bg-secondary/50 border border-border"

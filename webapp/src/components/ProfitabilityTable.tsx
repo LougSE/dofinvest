@@ -38,12 +38,14 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
   const [resourceSortDesc, setResourceSortDesc] = useState(true);
   const [includedIds, setIncludedIds] = useState<Set<number>>(new Set(results.map((r) => r.item.id)));
   const [expandedSortDesc, setExpandedSortDesc] = useState<Record<number, boolean>>({});
-  const [acknowledgedResourceIds, setAcknowledgedResourceIds] = useState<Set<number>>(new Set());
+  const [acknowledgedResourceIds, setAcknowledgedResourceIds] = useState<Set<string>>(new Set());
+  const [acknowledgedItemResources, setAcknowledgedItemResources] = useState<Record<number, Set<string>>>({});
 
   useEffect(() => {
     setEditableResults(results);
     setIncludedIds(new Set(results.map((r) => r.item.id)));
     setAcknowledgedResourceIds(new Set());
+    setAcknowledgedItemResources({});
   }, [results]);
 
   const sortedResults = [...editableResults].sort((a, b) => {
@@ -55,6 +57,8 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
     () => editableResults.filter((r) => includedIds.has(r.item.id)),
     [editableResults, includedIds],
   );
+
+  const allIncluded = includedIds.size === editableResults.length && editableResults.length > 0;
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -110,19 +114,38 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
     );
   };
 
-  const aggregatedResources = useMemo(() => {
-    const map = new Map<number, Resource & { name: string; iconUrl: string }>();
+  type AggregatedResource = Resource & { key: string };
+
+  const getResourceKey = (res: { name?: string; id?: number }) => {
+    if (res.name && res.name.trim()) return res.name.toLowerCase();
+    return `res-${res.id ?? Math.random().toString(36).slice(2)}`;
+  };
+
+  const aggregatedResources = useMemo<AggregatedResource[]>(() => {
+    const map = new Map<string, AggregatedResource>();
     editableResults.forEach((res) => {
       if (!includedIds.has(res.item.id)) return;
-      res.resources.forEach((r) => {
-        const current = map.get(r.id);
-        const totalQuantity = (current?.totalQuantity || 0) + r.totalQuantity;
-        const unitPrice = r.unitPrice;
-        map.set(r.id, {
-          ...r,
-          totalQuantity,
-          totalCost: unitPrice * totalQuantity,
-        });
+      const resources = res.resources ?? [];
+      resources.forEach((r) => {
+        const key = getResourceKey(r);
+        const existing = map.get(key);
+        const totalQuantity = (existing?.totalQuantity || 0) + (r.totalQuantity ?? 0);
+        const totalCost = (existing?.totalCost || 0) + (r.totalCost ?? 0);
+        if (existing) {
+          map.set(key, {
+            ...existing,
+            totalQuantity,
+            totalCost,
+          });
+        } else {
+          map.set(key, {
+            ...r,
+            name: r.name || existing?.name || "Ressource",
+            key,
+            totalQuantity,
+            totalCost,
+          });
+        }
       });
     });
     const arr = Array.from(map.values());
@@ -141,14 +164,23 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
 
   useEffect(() => {
     setAcknowledgedResourceIds((prev) => {
-      const existingIds = new Set(aggregatedResources.map((r) => r.id));
-      const next = new Set<number>();
+      const existingIds = new Set(aggregatedResources.map((r) => r.key));
+      const next = new Set<string>();
       prev.forEach((id) => {
         if (existingIds.has(id)) next.add(id);
       });
       return next;
     });
   }, [aggregatedResources]);
+
+  const toggleAcknowledgedItemResource = (itemId: number, resKey: string) => {
+    setAcknowledgedItemResources((prev) => {
+      const current = prev[itemId] ? new Set(prev[itemId]) : new Set<string>();
+      if (current.has(resKey)) current.delete(resKey);
+      else current.add(resKey);
+      return { ...prev, [itemId]: current };
+    });
+  };
 
   const computeExpandedCostStyle = (resources: Resource[]) => {
     const max = resources.reduce((m, r) => Math.max(m, r.totalCost), 0);
@@ -265,7 +297,23 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
               <TableHead className="text-foreground">Item</TableHead>
-              <TableHead className="text-center">Qté</TableHead>
+              <TableHead className="text-center">
+                <div className="flex items-center justify-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={allIncluded}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setIncludedIds(new Set(editableResults.map((r) => r.item.id)));
+                      } else {
+                        setIncludedIds(new Set());
+                      }
+                    }}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-xs text-muted-foreground">Qté</span>
+                </div>
+              </TableHead>
               <TableHead
                 className="cursor-pointer hover:text-primary transition-colors"
                 onClick={() => toggleSort("costTotal")}
@@ -370,12 +418,12 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                           setEditableResults((prev) =>
                             prev.map((r) => {
                               if (r.item.id !== result.item.id) return r;
-                              const scaledResources = r.resources.map((res) => ({
-                                ...res,
-                                totalQuantity: res.totalQuantity * factor,
-                                totalCost: res.totalCost * factor,
-                              }));
-                              const costTotal = r.costTotal * factor;
+                              const scaledResources = r.resources.map((res) => {
+                                const totalQuantity = Math.round(res.totalQuantity * factor);
+                                const totalCost = totalQuantity * res.unitPrice;
+                                return { ...res, totalQuantity, totalCost };
+                              });
+                              const costTotal = scaledResources.reduce((sum, res) => sum + res.totalCost, 0);
                               const revenue = r.hdvPrice * newQty;
                               const benefit = revenue - costTotal;
                               const marginPercent = revenue > 0 ? (benefit / revenue) * 100 : 0;
@@ -390,7 +438,7 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                             }),
                           );
                         }}
-                        className="input-dofus w-16 h-9 rounded px-3 text-sm text-right bg-secondary/60 border border-border focus:border-primary focus-visible:ring-0"
+                        className="input-dofus no-spin w-16 h-9 rounded px-3 text-sm text-right bg-secondary/60 border border-border focus:border-primary focus-visible:ring-0"
                       />
                     </div>
                   </TableCell>
@@ -452,34 +500,25 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                   <TableRow className="bg-secondary/30 border-border">
                     <TableCell colSpan={7} className="py-4">
                       <div className="pl-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-muted-foreground">Recette de craft</p>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExpandedSortDesc((prev) => ({
-                                ...prev,
-                                [result.item.id]: !prev[result.item.id],
-                              }));
-                            }}
-                          >
-                            Trier par coût {expandedSortDesc[result.item.id] ? "↓" : "↑"}
-                          </Button>
-                        </div>
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                           {(() => {
                           const sortDesc = expandedSortDesc[result.item.id] ?? true;
-                            const sortedResources = [...result.resources].sort((a, b) => {
+                            const sortedResources = [...(result.resources ?? [])].sort((a, b) => {
                               const diff = a.totalCost - b.totalCost;
                               return sortDesc ? -diff : diff;
                             });
                             const colorFn = computeExpandedCostStyle(sortedResources);
                             return sortedResources.map((res) => (
                               <div
-                                key={res.id}
-                                className="flex items-center gap-2 p-2 rounded-lg bg-background/50"
+                                key={`${getResourceKey(res)}-${result.item.id}`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleAcknowledgedItemResource(result.item.id, getResourceKey(res));
+                                }}
+                                className={cn(
+                                  "flex items-center gap-2 p-2 rounded-lg bg-background/50 cursor-pointer transition",
+                                  (acknowledgedItemResources[result.item.id]?.has(getResourceKey(res))) && "opacity-50 grayscale"
+                                )}
                               >
                                 <img
                                   src={res.iconUrl}
@@ -542,18 +581,18 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
           <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
             {aggregatedResources.map((res) => (
               <div
-                key={res.id}
+                key={res.key}
                 onClick={() => {
                   setAcknowledgedResourceIds((prev) => {
                     const next = new Set(prev);
-                    if (next.has(res.id)) next.delete(res.id);
-                    else next.add(res.id);
+                    if (next.has(res.key)) next.delete(res.key);
+                    else next.add(res.key);
                     return next;
                   });
                 }}
                 className={cn(
                   "flex items-center gap-3 rounded-lg border border-border bg-background/60 p-3 cursor-pointer transition",
-                  acknowledgedResourceIds.has(res.id) && "opacity-50 grayscale"
+                  acknowledgedResourceIds.has(res.key) && "opacity-50 grayscale"
                 )}
               >
                 <img
@@ -569,7 +608,10 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-foreground truncate">{res.name}</p>
-                  <p className="text-sm font-semibold text-primary">{res.totalQuantity} unités</p>
+                  <p className="text-sm font-semibold text-primary flex items-center gap-2">
+                    <span>{res.totalQuantity} unités</span>
+                    <span className="text-xs text-muted-foreground">{formatKamas(res.unitPrice)} u</span>
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">Coût total</p>
