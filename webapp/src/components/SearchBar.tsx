@@ -9,10 +9,39 @@ interface SearchBarProps {
   onChange: (value: string) => void;
   onFilterCraftable: (craftableOnly: boolean) => void;
   craftableOnly: boolean;
+  onSelectTag?: (tag: string) => void;
+  activeTag?: string;
+  tagOptions?: string[];
 }
 
-const SearchBar = ({ value, onChange, onFilterCraftable, craftableOnly }: SearchBarProps) => {
+const DEFAULT_TAGS = [
+  "Amulette",
+  "Anneau",
+  "Arc",
+  "Baguette",
+  "Bottes",
+  "Bâton",
+  "Cape",
+  "Ceinture",
+  "Chapeau",
+  "Dague",
+  "Épée",
+  "Ressource",
+];
+
+const SearchBar = ({ value, onChange, onFilterCraftable, craftableOnly, onSelectTag, activeTag, tagOptions }: SearchBarProps) => {
   const [isFocused, setIsFocused] = useState(false);
+  const tags = tagOptions && tagOptions.length ? tagOptions : DEFAULT_TAGS;
+
+  const handleTagClick = (tag: string) => {
+    if (onSelectTag) {
+      const normalized = tag.toLowerCase();
+      const next = activeTag === normalized ? "all" : normalized;
+      onSelectTag(next);
+    } else {
+      onChange(tag);
+    }
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -68,12 +97,15 @@ const SearchBar = ({ value, onChange, onFilterCraftable, craftableOnly }: Search
 
       {/* Search hints */}
       <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-        <span className="text-xs text-muted-foreground">Suggestions:</span>
-        {["Arc", "Coiffe", "Cape", "Anneau"].map((hint) => (
+        <span className="text-xs text-muted-foreground">Filtres:</span>
+        {tags.map((hint) => (
           <button
             key={hint}
-            onClick={() => onChange(hint)}
-            className="px-3 py-1 text-xs rounded-full bg-secondary/50 text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all duration-200 border border-border/50 hover:border-primary/30"
+            onClick={() => handleTagClick(hint)}
+            className={cn(
+              "px-3 py-1 text-xs rounded-full bg-secondary/50 text-muted-foreground hover:bg-primary/20 hover:text-primary transition-all duration-200 border border-border/50 hover:border-primary/30",
+              activeTag && activeTag === hint.toLowerCase() && "border-primary text-primary bg-primary/10"
+            )}
           >
             {hint}
           </button>

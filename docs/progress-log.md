@@ -6,6 +6,8 @@
 - Add new entries at the bottom with the date and concise bullets (avoid verbosity).
 
 ## 2026-01-08
+- Search: tag chips toggleable (on/off) acting as true filters; alphabetized list; layout back to wide search.
+- HDV price inputs now buffered and committed on blur/Enter to prevent rows from jumping during typing.
 - Modal: hook order fixed (no `isLockedResource` crash), safe keys for grouped resources; build OK.
 - Aggregated resources: unit price next to quantity (gray), compact cards; graying clickable preserved (aggregated and per item).
 - Item expansions: removed “Recette de craft” header and cost sort button to simplify UI.

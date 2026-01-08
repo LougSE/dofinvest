@@ -11,12 +11,34 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 type ViewState = "search" | "results";
 
 const Index = () => {
+  const tagOptions = [
+    { label: "Tous", value: "all" },
+    { label: "Ressource", value: "ressource" },
+    { label: "Amulette", value: "amulette" },
+    { label: "Anneau", value: "anneau" },
+    { label: "Chapeau", value: "chapeau" },
+    { label: "Cape", value: "cape" },
+    { label: "Ceinture", value: "ceinture" },
+    { label: "Bottes", value: "bottes" },
+    { label: "Arme", value: "arme" },
+    { label: "Baguette", value: "baguette" },
+    { label: "Bâton", value: "bâton" },
+    { label: "Arc", value: "arc" },
+    { label: "Épée", value: "épée" },
+    { label: "Dague", value: "dague" },
+    { label: "Masse", value: "masse" },
+    { label: "Hache", value: "hache" },
+    { label: "Pelle", value: "pelle" },
+    { label: "Outil", value: "outil" },
+    { label: "Trophée", value: "trophée" },
+  ];
+
   const [searchQuery, setSearchQuery] = useState("");
   const [craftableOnly, setCraftableOnly] = useState(true);
   const [selectedItems, setSelectedItems] = useState<DofusItem[]>([]);
@@ -25,7 +47,7 @@ const Index = () => {
   const [viewState, setViewState] = useState<ViewState>("search");
   const [results, setResults] = useState<ProfitabilityResult[]>([]);
   const [datasetVersion, setDatasetVersion] = useState<"20" | "129">("20");
-  const [tagFilter, setTagFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState("all");
   const [savedAnalyses, setSavedAnalyses] = useState<
     { id: string; name: string; date: string; items: DofusItem[]; results: ProfitabilityResult[]; dataset: "20" | "129" }
   >([]);
@@ -59,7 +81,7 @@ const Index = () => {
   // Filter items based on search and craftable filter
   const filteredItems = useMemo(() => {
     const tag = tagFilter.trim().toLowerCase();
-    if (!tag) return searchResults;
+    if (!tag || tag === "all") return searchResults;
     return searchResults.filter((item) => item.type.toLowerCase().includes(tag));
   }, [searchResults, tagFilter]);
 
@@ -197,7 +219,7 @@ const Index = () => {
               </section>
 
               {/* Dataset & Search */}
-              <div className="grid gap-4 md:grid-cols-3 items-start">
+              <div className="grid gap-4 md:grid-cols-[240px,1fr] items-start">
                 <div className="space-y-2">
                   <p className="text-sm text-muted-foreground">Version du jeu</p>
                   <Select value={datasetVersion} onValueChange={(v) => setDatasetVersion(v as "20" | "129") }>
@@ -211,27 +233,19 @@ const Index = () => {
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">Filtre par type / tag</p>
-                  <Input
-                    placeholder="Ex: amulette, ressource, cape"
-                    value={tagFilter}
-                    onChange={(e) => setTagFilter(e.target.value)}
-                    className="input-dofus"
-                  />
-                </div>
-
                 <SearchBar
                   value={searchQuery}
                   onChange={setSearchQuery}
                   onFilterCraftable={setCraftableOnly}
                   craftableOnly={craftableOnly}
+                  onSelectTag={(tag) => setTagFilter(tag)}
+                  activeTag={tagFilter}
                 />
               </div>
 
-              {!minQueryMet && (
-                <p className="text-center text-sm text-muted-foreground">
-                  Saisissez au moins 2 caractères pour rechercher.
+                {!minQueryMet && (
+                  <p className="text-center text-sm text-muted-foreground">
+                    Saisissez au moins 2 caractères pour rechercher.
                 </p>
               )}
 

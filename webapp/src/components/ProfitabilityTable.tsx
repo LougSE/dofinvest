@@ -40,12 +40,18 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
   const [expandedSortDesc, setExpandedSortDesc] = useState<Record<number, boolean>>({});
   const [acknowledgedResourceIds, setAcknowledgedResourceIds] = useState<Set<string>>(new Set());
   const [acknowledgedItemResources, setAcknowledgedItemResources] = useState<Record<number, Set<string>>>({});
+  const [priceInputs, setPriceInputs] = useState<Record<number, string>>({});
 
   useEffect(() => {
     setEditableResults(results);
     setIncludedIds(new Set(results.map((r) => r.item.id)));
     setAcknowledgedResourceIds(new Set());
     setAcknowledgedItemResources({});
+    const initialPrices: Record<number, string> = {};
+    results.forEach((r) => {
+      initialPrices[r.item.id] = r.hdvPrice ? String(r.hdvPrice) : "";
+    });
+    setPriceInputs(initialPrices);
   }, [results]);
 
   const sortedResults = [...editableResults].sort((a, b) => {
@@ -99,8 +105,9 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
   }, [includedResults]);
   const profitableCount = includedResults.filter((r) => r.benefit > 0).length;
 
-  const handlePriceChange = (id: number, value: string) => {
-    const clean = parseInt(value.replace(/\D/g, "")) || 0;
+  const commitPriceChange = (id: number, raw: string) => {
+    const clean = parseInt(raw.replace(/\D/g, "")) || 0;
+    setPriceInputs((prev) => ({ ...prev, [id]: clean ? String(clean) : "" }));
     setEditableResults((prev) =>
       prev.map((res) => {
         if (res.item.id !== id) return res;
@@ -448,9 +455,16 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                   <TableCell className="text-primary font-medium">
                     <input
                       type="text"
-                      value={formatKamas(result.hdvPrice)}
+                      value={priceInputs[result.item.id] ?? (result.hdvPrice ? String(result.hdvPrice) : "")}
                       onClick={(e) => e.stopPropagation()}
-                      onChange={(e) => handlePriceChange(result.item.id, e.target.value)}
+                      onChange={(e) => setPriceInputs((prev) => ({ ...prev, [result.item.id]: e.target.value }))}
+                      onBlur={(e) => commitPriceChange(result.item.id, e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          commitPriceChange(result.item.id, (e.target as HTMLInputElement).value);
+                          (e.target as HTMLInputElement).blur();
+                        }
+                      }}
                       className="w-24 bg-transparent border border-border rounded px-2 py-1 text-primary text-right text-sm focus:outline-none focus:border-primary"
                     />
                   </TableCell>
