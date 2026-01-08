@@ -33,6 +33,7 @@ export interface SelectedItem {
 
 export interface ProfitabilityResult {
   item: DofusItem;
+  quantity?: number;
   costTotal: number;
   hdvPrice: number;
   benefit: number;
