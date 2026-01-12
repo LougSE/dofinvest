@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { DofusItem, Resource, ProfitabilityResult } from "@/types/dofus";
 import { useItemsSearch } from "@/hooks/useItemsSearch";
 import Header from "@/components/Header";
@@ -52,6 +52,9 @@ const Index = () => {
     { id: string; name: string; date: string; items: DofusItem[]; results: ProfitabilityResult[]; dataset: "20" | "129" }
   >([]);
   const server = "Abrak";
+  const PAGE_SIZE = 60;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     try {
@@ -84,6 +87,28 @@ const Index = () => {
     if (!tag || tag === "all") return searchResults;
     return searchResults.filter((item) => item.type.toLowerCase().includes(tag));
   }, [searchResults, tagFilter]);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [searchQuery, tagFilter, datasetVersion, craftableOnly, filteredItems.length]);
+
+  useEffect(() => {
+    if (!loaderRef.current) return;
+    if (visibleCount >= filteredItems.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting) {
+          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filteredItems.length));
+        }
+      },
+      { rootMargin: "200px 0px", threshold: 0.1 },
+    );
+
+    observer.observe(loaderRef.current);
+    return () => observer.disconnect();
+  }, [filteredItems.length, visibleCount]);
 
   const handleSelectItem = (item: DofusItem) => {
     try {
@@ -243,12 +268,6 @@ const Index = () => {
                 />
               </div>
 
-                {!minQueryMet && (
-                  <p className="text-center text-sm text-muted-foreground">
-                    Saisissez au moins 2 caractères pour rechercher.
-                </p>
-              )}
-
               {/* Results count */}
               <div className="flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
@@ -257,12 +276,16 @@ const Index = () => {
               </div>
 
               {/* Item grid */}
-              {minQueryMet && (
-                <ItemGrid
-                  items={filteredItems}
-                  selectedItems={selectedItems}
-                  onSelectItem={handleSelectItem}
-                />
+              <ItemGrid
+                items={filteredItems.slice(0, visibleCount)}
+                selectedItems={selectedItems}
+                onSelectItem={handleSelectItem}
+              />
+
+              {filteredItems.length > visibleCount && (
+                <div ref={loaderRef} className="flex justify-center py-6 text-sm text-muted-foreground">
+                  Chargement...
+                </div>
               )}
 
               {isSearchLoading && (

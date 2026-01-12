@@ -24,7 +24,7 @@ export function useItemsSearch({ query, craftableOnly = true, page = 1, pageSize
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const effectiveQuery = query.trim();
-  const minQueryMet = effectiveQuery.length >= 2;
+  const minQueryMet = effectiveQuery.length >= 1;
 
   const fetchItems = async () => {
     if (abortRef.current) abortRef.current.abort();
@@ -35,12 +35,8 @@ export function useItemsSearch({ query, craftableOnly = true, page = 1, pageSize
     setIsOfflineFallback(false);
 
     try {
-      if (!minQueryMet) {
-        setItems([]);
-        setHasMore(false);
-        return;
-      }
-      const results = await searchLocalItems({ query: effectiveQuery, craftableOnly, dataset });
+      const queryToUse = minQueryMet ? effectiveQuery : "";
+      const results = await searchLocalItems({ query: queryToUse, craftableOnly, dataset });
       setItems(results);
       setHasMore(false);
     } catch (err: any) {
