@@ -28,7 +28,7 @@ interface ProfitabilityTableProps {
   onQuantityChange: (id: number, qty: number) => void;
 }
 
-type SortKey = "benefit" | "marginPercent" | "hdvPrice" | "costTotal";
+type SortKey = "benefit" | "marginPercent" | "hdvPrice" | "costTotal" | "multiplier";
 
 const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityChange }: ProfitabilityTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("marginPercent");
@@ -41,6 +41,9 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
   const [acknowledgedResourceIds, setAcknowledgedResourceIds] = useState<Set<string>>(new Set());
   const [acknowledgedItemResources, setAcknowledgedItemResources] = useState<Record<number, Set<string>>>({});
   const [priceInputs, setPriceInputs] = useState<Record<number, string>>({});
+  const [filterProfitableOnly, setFilterProfitableOnly] = useState(false);
+  const [filterMinMultiplier, setFilterMinMultiplier] = useState<number | null>(null);
+  const [filterItemType, setFilterItemType] = useState<string | null>(null);
 
   useEffect(() => {
     setEditableResults(results);
@@ -54,7 +57,26 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
     setPriceInputs(initialPrices);
   }, [results]);
 
-  const sortedResults = [...editableResults].sort((a, b) => {
+  const itemTypes = useMemo(() => {
+    const types = new Set(editableResults.map((r) => r.item.type));
+    return Array.from(types).sort();
+  }, [editableResults]);
+
+  const filteredResults = useMemo(() => {
+    return editableResults.filter((r) => {
+      if (filterProfitableOnly && r.benefit <= 0) return false;
+      if (filterMinMultiplier !== null && r.costTotal > 0) {
+        const qty = r.quantity ?? quantities[r.item.id] ?? 1;
+        const revenue = r.hdvPrice * qty;
+        const multiplier = revenue / r.costTotal;
+        if (multiplier < filterMinMultiplier) return false;
+      }
+      if (filterItemType && r.item.type !== filterItemType) return false;
+      return true;
+    });
+  }, [editableResults, filterProfitableOnly, filterMinMultiplier, filterItemType, quantities]);
+
+  const sortedResults = [...filteredResults].sort((a, b) => {
     const multiplier = sortDesc ? -1 : 1;
     return (a[sortKey] - b[sortKey]) * multiplier;
   });
@@ -165,8 +187,10 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
   }, [editableResults, resourceSortDesc, includedIds]);
 
   const aggregatedTotalCost = useMemo(
-    () => aggregatedResources.reduce((sum, r) => sum + r.totalCost, 0),
-    [aggregatedResources],
+    () => aggregatedResources
+      .filter((r) => !acknowledgedResourceIds.has(r.key))
+      .reduce((sum, r) => sum + r.totalCost, 0),
+    [aggregatedResources, acknowledgedResourceIds],
   );
 
   useEffect(() => {
@@ -218,15 +242,21 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
   };
 
   const exportToCsv = () => {
-    const headers = ["Item", "Niveau", "Coût Total", "Prix HDV", "Bénéfice", "Marge %"];
-    const rows = sortedResults.map((r) => [
-      r.item.name,
-      r.item.level,
-      r.costTotal,
-      r.hdvPrice,
-      r.benefit,
-      `${r.marginPercent.toFixed(1)}%`,
-    ]);
+    const headers = ["Item", "Niveau", "Qté", "Coût Total", "Prix HDV", "Bénéfice", "Rendement"];
+    const rows = sortedResults.map((r) => {
+      const qty = r.quantity ?? quantities[r.item.id] ?? 1;
+      const revenue = r.hdvPrice * qty;
+      const multiplier = r.costTotal > 0 ? revenue / r.costTotal : 0;
+      return [
+        r.item.name,
+        r.item.level,
+        qty,
+        r.costTotal,
+        r.hdvPrice,
+        r.benefit,
+        `${multiplier.toFixed(1)}x`,
+      ];
+    });
     
     const csvContent = [headers, ...rows].map((row) => row.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -298,6 +328,58 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
           )}
         </div>
 
+      {/* Filters */}
+      <div className="flex flex-wrap items-center gap-4 p-4 card-dofus rounded-xl">
+        <span className="text-sm text-muted-foreground">Filtres:</span>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={filterProfitableOnly}
+            onChange={(e) => setFilterProfitableOnly(e.target.checked)}
+            className="h-4 w-4"
+          />
+          Rentables uniquement
+        </label>
+        <select
+          value={filterMinMultiplier ?? ""}
+          onChange={(e) => setFilterMinMultiplier(e.target.value ? Number(e.target.value) : null)}
+          className="bg-secondary border border-border rounded px-3 py-1.5 text-sm"
+        >
+          <option value="">Tous rendements</option>
+          <option value="1.5">≥ 1.5x</option>
+          <option value="2">≥ 2x</option>
+          <option value="3">≥ 3x</option>
+          <option value="5">≥ 5x</option>
+          <option value="10">≥ 10x</option>
+        </select>
+        <select
+          value={filterItemType ?? ""}
+          onChange={(e) => setFilterItemType(e.target.value || null)}
+          className="bg-secondary border border-border rounded px-3 py-1.5 text-sm"
+        >
+          <option value="">Tous types</option>
+          {itemTypes.map((type) => (
+            <option key={type} value={type}>{type}</option>
+          ))}
+        </select>
+        {(filterProfitableOnly || filterMinMultiplier !== null || filterItemType) && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setFilterProfitableOnly(false);
+              setFilterMinMultiplier(null);
+              setFilterItemType(null);
+            }}
+          >
+            Réinitialiser
+          </Button>
+        )}
+        <span className="text-xs text-muted-foreground ml-auto">
+          {sortedResults.length}/{editableResults.length} items
+        </span>
+      </div>
+
       {/* Table */}
       <div className="card-dofus rounded-xl overflow-hidden">
         <Table>
@@ -353,7 +435,7 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                 onClick={() => toggleSort("marginPercent")}
               >
                 <div className="flex items-center gap-1">
-                  Marge
+                  Rend.
                   <ArrowUpDown className="w-4 h-4" />
                 </div>
               </TableHead>
@@ -487,18 +569,26 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span
-                      className={cn(
-                        "px-2 py-1 rounded-full text-xs font-medium",
-                        result.marginPercent >= 30
-                          ? "bg-profit/20 text-profit"
-                          : result.marginPercent >= 0
-                          ? "bg-primary/20 text-primary"
-                          : "bg-loss/20 text-loss"
-                      )}
-                    >
-                      {result.marginPercent.toFixed(1)}%
-                    </span>
+                    {(() => {
+                      const qty = result.quantity ?? quantities[result.item.id] ?? 1;
+                      const revenue = result.hdvPrice * qty;
+                      const multiplier = result.costTotal > 0 ? revenue / result.costTotal : 0;
+                      const isProfit = multiplier >= 1;
+                      return (
+                        <span
+                          className={cn(
+                            "px-2 py-1 rounded-full text-xs font-medium",
+                            multiplier >= 2
+                              ? "bg-profit/20 text-profit"
+                              : isProfit
+                              ? "bg-primary/20 text-primary"
+                              : "bg-loss/20 text-loss"
+                          )}
+                        >
+                          {multiplier.toFixed(1)}x
+                        </span>
+                      );
+                    })()}
                   </TableCell>
                   <TableCell>
                     {expandedRows.has(result.item.id) ? (
