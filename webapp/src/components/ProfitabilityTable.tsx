@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Fragment } from "react";
 import { ProfitabilityResult, Resource } from "@/types/dofus";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,14 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 
 interface ProfitabilityTableProps {
   results: ProfitabilityResult[];
@@ -26,36 +34,63 @@ interface ProfitabilityTableProps {
   onSave?: () => void;
   quantities: Record<number, number>;
   onQuantityChange: (id: number, qty: number) => void;
+  initialIncludedIds?: number[];
+  onIncludedIdsChange?: (ids: number[]) => void;
+  initialPriceInputs?: Record<number, string>;
+  onPriceInputsChange?: (inputs: Record<number, string>) => void;
+  onResultsChange?: (results: ProfitabilityResult[]) => void;
 }
 
 type SortKey = "benefit" | "marginPercent" | "hdvPrice" | "costTotal" | "multiplier";
 
-const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityChange }: ProfitabilityTableProps) => {
+const ProfitabilityTable = ({
+  results,
+  onBack,
+  onSave,
+  quantities,
+  onQuantityChange,
+  initialIncludedIds,
+  onIncludedIdsChange,
+  initialPriceInputs,
+  onPriceInputsChange,
+  onResultsChange,
+}: ProfitabilityTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("marginPercent");
   const [sortDesc, setSortDesc] = useState(true);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [editableResults, setEditableResults] = useState<ProfitabilityResult[]>(results);
   const [resourceSortDesc, setResourceSortDesc] = useState(true);
-  const [includedIds, setIncludedIds] = useState<Set<number>>(new Set(results.map((r) => r.item.id)));
+  const [includedIds, setIncludedIds] = useState<Set<number>>(new Set(initialIncludedIds ?? results.map((r) => r.item.id)));
   const [expandedSortDesc, setExpandedSortDesc] = useState<Record<number, boolean>>({});
   const [acknowledgedResourceIds, setAcknowledgedResourceIds] = useState<Set<string>>(new Set());
   const [acknowledgedItemResources, setAcknowledgedItemResources] = useState<Record<number, Set<string>>>({});
-  const [priceInputs, setPriceInputs] = useState<Record<number, string>>({});
+  const [priceInputs, setPriceInputs] = useState<Record<number, string>>(initialPriceInputs ?? {});
   const [filterProfitableOnly, setFilterProfitableOnly] = useState(false);
   const [filterMinMultiplier, setFilterMinMultiplier] = useState<number | null>(null);
   const [filterItemType, setFilterItemType] = useState<string | null>(null);
+  const [editResource, setEditResource] = useState<{ id?: number; key?: string; name: string; unitPrice: number } | null>(null);
+  const [editResourceInput, setEditResourceInput] = useState("");
 
   useEffect(() => {
     setEditableResults(results);
-    setIncludedIds(new Set(results.map((r) => r.item.id)));
+    onResultsChange?.(results);
+    if (initialIncludedIds !== undefined) {
+      setIncludedIds(new Set(initialIncludedIds));
+    } else {
+      setIncludedIds(new Set(results.map((r) => r.item.id)));
+    }
     setAcknowledgedResourceIds(new Set());
     setAcknowledgedItemResources({});
     const initialPrices: Record<number, string> = {};
-    results.forEach((r) => {
-      initialPrices[r.item.id] = r.hdvPrice ? String(r.hdvPrice) : "";
-    });
-    setPriceInputs(initialPrices);
-  }, [results]);
+    if (initialPriceInputs && Object.keys(initialPriceInputs).length) {
+      setPriceInputs(initialPriceInputs);
+    } else {
+      results.forEach((r) => {
+        initialPrices[r.item.id] = r.hdvPrice ? String(r.hdvPrice) : "";
+      });
+      setPriceInputs(initialPrices);
+    }
+  }, [results, initialIncludedIds, initialPriceInputs]);
 
   const itemTypes = useMemo(() => {
     const types = new Set(editableResults.map((r) => r.item.type));
@@ -77,6 +112,9 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
   }, [editableResults, filterProfitableOnly, filterMinMultiplier, filterItemType, quantities]);
 
   const sortedResults = [...filteredResults].sort((a, b) => {
+    const includedWeightA = includedIds.has(a.item.id) ? 0 : 1;
+    const includedWeightB = includedIds.has(b.item.id) ? 0 : 1;
+    if (includedWeightA !== includedWeightB) return includedWeightA - includedWeightB; // included first
     const multiplier = sortDesc ? -1 : 1;
     return (a[sortKey] - b[sortKey]) * multiplier;
   });
@@ -130,8 +168,9 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
   const commitPriceChange = (id: number, raw: string) => {
     const clean = parseInt(raw.replace(/\D/g, "")) || 0;
     setPriceInputs((prev) => ({ ...prev, [id]: clean ? String(clean) : "" }));
-    setEditableResults((prev) =>
-      prev.map((res) => {
+    onPriceInputsChange?.({ ...priceInputs, [id]: clean ? String(clean) : "" });
+    setEditableResults((prev) => {
+      const next = prev.map((res) => {
         if (res.item.id !== id) return res;
         const qty = res.quantity ?? quantities[id] ?? 1;
         const hdvPrice = clean;
@@ -139,8 +178,37 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
         const benefit = revenue - res.costTotal;
         const marginPercent = revenue > 0 ? (benefit / revenue) * 100 : 0;
         return { ...res, hdvPrice, benefit, marginPercent };
-      }),
-    );
+      });
+      onResultsChange?.(next);
+      return next;
+    });
+  };
+
+  const updateResourceUnitPrice = (resourceKey: string | null, resourceId: number | undefined, newPrice: number) => {
+    setEditableResults((prev) => {
+      const next = prev.map((res) => {
+        const resources = (res.resources ?? []).map((r) => {
+          const matchesId = resourceId !== undefined && r.id === resourceId;
+          const matchesKey = resourceKey ? getResourceKey(r) === resourceKey : false;
+          if (!matchesId && !matchesKey) return r;
+          const totalCost = (r.totalQuantity ?? 0) * newPrice;
+          return { ...r, unitPrice: newPrice, totalCost };
+        });
+        const costTotal = resources.reduce((sum, r) => sum + r.totalCost, 0);
+        const qty = res.quantity ?? quantities[res.item.id] ?? 1;
+        const revenue = res.hdvPrice * qty;
+        const benefit = revenue - costTotal;
+        const marginPercent = revenue > 0 ? (benefit / revenue) * 100 : 0;
+        return { ...res, resources, costTotal, benefit, marginPercent };
+      });
+      onResultsChange?.(next);
+      return next;
+    });
+  };
+
+  const openEditResource = (resource: Resource, resourceKey?: string) => {
+    setEditResource({ id: resource.id, key: resourceKey ?? getResourceKey(resource), name: resource.name, unitPrice: resource.unitPrice });
+    setEditResourceInput(resource.unitPrice ? String(resource.unitPrice) : "");
   };
 
   type AggregatedResource = Resource & { key: string };
@@ -268,7 +336,8 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
   };
 
   return (
-    <div className="space-y-6 pb-8">
+    <>
+      <div className="space-y-6 pb-8">
       {/* Stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {/* Total benefit */}
@@ -393,9 +462,12 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                     checked={allIncluded}
                     onChange={(e) => {
                       if (e.target.checked) {
-                        setIncludedIds(new Set(editableResults.map((r) => r.item.id)));
+                        const next = new Set(editableResults.map((r) => r.item.id));
+                        setIncludedIds(next);
+                        onIncludedIdsChange?.(Array.from(next));
                       } else {
                         setIncludedIds(new Set());
+                        onIncludedIdsChange?.([]);
                       }
                     }}
                     className="h-4 w-4"
@@ -444,12 +516,13 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
           </TableHeader>
           <TableBody>
             {sortedResults.map((result, index) => (
-              <>
+              <Fragment key={result.item.id}>
                 <TableRow
                   key={result.item.id}
                   className={cn(
                     "border-border cursor-pointer transition-colors",
-                    result.benefit >= 0 ? "profit-row" : "loss-row"
+                    result.benefit >= 0 ? "profit-row" : "loss-row",
+                    !includedIds.has(result.item.id) && "opacity-50 bg-muted/30"
                   )}
                   onClick={() => toggleRowExpand(result.item.id)}
                 >
@@ -488,6 +561,7 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                             const next = new Set(prev);
                             if (e.target.checked) next.add(result.item.id);
                             else next.delete(result.item.id);
+                            onIncludedIdsChange?.(Array.from(next));
                             return next;
                           });
                         }}
@@ -504,8 +578,8 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                           const prevQty = result.quantity ?? quantities[result.item.id] ?? 1;
                           const factor = newQty / prevQty;
                           onQuantityChange(result.item.id, newQty);
-                          setEditableResults((prev) =>
-                            prev.map((r) => {
+                          setEditableResults((prev) => {
+                            const next = prev.map((r) => {
                               if (r.item.id !== result.item.id) return r;
                               const scaledResources = r.resources.map((res) => {
                                 const totalQuantity = Math.round(res.totalQuantity * factor);
@@ -524,8 +598,10 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                                 benefit,
                                 marginPercent,
                               };
-                            }),
-                          );
+                            });
+                            onResultsChange?.(next);
+                            return next;
+                          });
                         }}
                         className="input-dofus no-spin w-16 h-9 rounded px-3 text-sm text-right bg-secondary/60 border border-border focus:border-primary focus-visible:ring-0"
                       />
@@ -620,10 +696,28 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                                   toggleAcknowledgedItemResource(result.item.id, getResourceKey(res));
                                 }}
                                 className={cn(
-                                  "flex items-center gap-2 p-2 rounded-lg bg-background/50 cursor-pointer transition",
+                                  "group relative flex items-center gap-2 p-2 rounded-lg bg-background/50 cursor-pointer transition",
                                   (acknowledgedItemResources[result.item.id]?.has(getResourceKey(res))) && "opacity-50 grayscale"
                                 )}
                               >
+                                <button
+                                  className="hidden group-hover:flex absolute top-1 right-1 text-[10px] px-2 py-1 rounded bg-secondary text-foreground border border-border"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditResource(res as Resource, getResourceKey(res));
+                                  }}
+                                >
+                                  Modifier
+                                </button>
+                                <button
+                                  className="hidden group-hover:flex absolute top-1 right-1 text-[10px] px-2 py-1 rounded bg-secondary text-foreground border border-border"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openEditResource(res as Resource, getResourceKey(res));
+                                  }}
+                                >
+                                  Modifier
+                                </button>
                                 <img
                                   src={res.iconUrl}
                                   alt={res.name}
@@ -657,7 +751,7 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                     </TableCell>
                   </TableRow>
                 )}
-              </>
+              </Fragment>
             ))}
           </TableBody>
         </Table>
@@ -695,10 +789,19 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
                   });
                 }}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg border border-border bg-background/60 p-3 cursor-pointer transition",
+                  "group relative flex items-center gap-3 rounded-lg border border-border bg-background/60 p-3 cursor-pointer transition",
                   acknowledgedResourceIds.has(res.key) && "opacity-50 grayscale"
                 )}
               >
+                <button
+                  className="hidden group-hover:flex absolute top-2 right-2 text-[10px] px-2 py-1 rounded bg-secondary text-foreground border border-border"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEditResource(res as Resource, res.key);
+                  }}
+                >
+                  Modifier
+                </button>
                 <img
                   src={res.iconUrl}
                   alt={res.name}
@@ -728,7 +831,41 @@ const ProfitabilityTable = ({ results, onBack, onSave, quantities, onQuantityCha
           </div>
         </div>
       )}
-    </div>
+      </div>
+      <Dialog open={!!editResource} onOpenChange={(open) => { if (!open) setEditResource(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Modifier le prix</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{editResource?.name}</p>
+            <Input
+              type="number"
+              inputMode="numeric"
+              value={editResourceInput}
+              onChange={(e) => setEditResourceInput(e.target.value)}
+              placeholder="Prix unitaire (kamas)"
+              autoFocus
+            />
+          </div>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setEditResource(null)}>
+              Annuler
+            </Button>
+            <Button
+              onClick={() => {
+                if (!editResource) return;
+                const clean = parseInt(editResourceInput.replace(/\D/g, "")) || 0;
+                updateResourceUnitPrice(editResource.key ?? null, editResource.id, clean);
+                setEditResource(null);
+              }}
+            >
+              Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

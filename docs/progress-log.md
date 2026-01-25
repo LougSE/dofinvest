@@ -13,6 +13,16 @@
 - Item expansions: removed “Recette de craft” header and cost sort button to simplify UI.
 - Modal HDV: items sorted with non-locked first (aligned with resources).
 
+## 2026-01-25
+- Added in-analysis resource price editing via hover “Modifier” buttons and a modal (applies to detailed and aggregated resources).
+- Build adjusted to support the new price modal.
+
+
+## 2026-01-27
+- Persisted last analysis reliably and made resume optional (prompt on landing instead of auto-redirect); centralized timestamped saves across analyze/load/edits.
+- “Inclure” toggle restored: excluded rows stay listed, grayed, sorted after included ones, and excluded from calculations.
+- Fixed missing React keys in profitability rows to clear warnings.
+
 ## 2026-01-03
 - Quantities adjustable only on the results page (no quantity fields in the selection panel). Quantity input restyled to match the theme.
 - Price modal locks restored: prefilled values auto-lock with “Modifier” to unlock; locks reset on close.
