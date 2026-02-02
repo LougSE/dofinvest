@@ -26,6 +26,8 @@ interface SavedAnalysis {
   quantities: Record<number, number>;
   includedIds: number[];
   priceInputs: Record<number, string>;
+  acknowledgedResources?: string[];
+  acknowledgedItemResources?: Record<number, string[]>;
 }
 
 const Index = () => {
@@ -72,12 +74,15 @@ const Index = () => {
   const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>([]);
   const [priceInputsState, setPriceInputsState] = useState<Record<number, string>>({});
   const [includedIdsState, setIncludedIdsState] = useState<number[]>([]);
+  const [ackResourcesState, setAckResourcesState] = useState<string[]>([]);
+  const [ackItemResourcesState, setAckItemResourcesState] = useState<Record<number, string[]>>({});
   const [hasRestoredLastAnalysis, setHasRestoredLastAnalysis] = useState(false);
   const server = "Abrak";
   const PAGE_SIZE = 60;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const loaderRef = useRef<HTMLDivElement | null>(null);
   const lastAnalysisKey = useMemo(() => `dofinvest_last_analysis:${server}:${datasetVersion}`, [server, datasetVersion]);
+  const persistDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     try {
@@ -85,29 +90,33 @@ const Index = () => {
       if (!raw) {
         setHasRestoredLastAnalysis(false);
         setSelectedItems([]);
-        setResults([]);
-        setLatestEditableResults([]);
-        setQuantities({});
-        setIncludedIdsState([]);
-        setPriceInputsState({});
-        return;
-      }
-      const parsed = JSON.parse(raw);
-      setSelectedItems(parsed.items || []);
-      setResults(parsed.results || []);
-      setLatestEditableResults(parsed.results || []);
-      setIncludedIdsState(parsed.includedIds || (parsed.results || []).map((r: ProfitabilityResult) => r.item.id));
-      const qtyMap: Record<number, number> = {};
-      (parsed.results || []).forEach((r: ProfitabilityResult) => {
-        qtyMap[r.item.id] = r.quantity ?? 1;
-      });
-      setQuantities(qtyMap);
-      setPriceInputsState(parsed.priceInputs || {});
-      setHasRestoredLastAnalysis(true);
-    } catch (err) {
-      console.error("Failed to load last analysis", err);
-      setHasRestoredLastAnalysis(false);
+      setResults([]);
+      setLatestEditableResults([]);
+      setQuantities({});
+      setIncludedIdsState([]);
+      setPriceInputsState({});
+      setAckResourcesState([]);
+      setAckItemResourcesState({});
+      return;
     }
+    const parsed = JSON.parse(raw);
+    setSelectedItems(parsed.items || []);
+    setResults(parsed.results || []);
+    setLatestEditableResults(parsed.results || []);
+    setIncludedIdsState(parsed.includedIds || (parsed.results || []).map((r: ProfitabilityResult) => r.item.id));
+      const qtyMap: Record<number, number> = {};
+    (parsed.results || []).forEach((r: ProfitabilityResult) => {
+      qtyMap[r.item.id] = r.quantity ?? 1;
+    });
+    setQuantities(qtyMap);
+    setPriceInputsState(parsed.priceInputs || {});
+    setAckResourcesState(parsed.acknowledgedResources || []);
+    setAckItemResourcesState(parsed.acknowledgedItemResources || {});
+    setHasRestoredLastAnalysis(true);
+  } catch (err) {
+    console.error("Failed to load last analysis", err);
+    setHasRestoredLastAnalysis(false);
+  }
   }, [lastAnalysisKey]);
 
   useEffect(() => {
@@ -151,12 +160,16 @@ const Index = () => {
       quantitiesToPersist,
       includedIds,
       priceInputs,
+      acknowledgedResources,
+      acknowledgedItemResources,
     }: {
       items: DofusItem[];
       resultsToPersist: ProfitabilityResult[];
       quantitiesToPersist: Record<number, number>;
       includedIds: number[];
       priceInputs: Record<number, string>;
+      acknowledgedResources?: string[];
+      acknowledgedItemResources?: Record<number, string[]>;
     }) => {
       if (!resultsToPersist.length) return;
       try {
@@ -168,6 +181,8 @@ const Index = () => {
             quantities: quantitiesToPersist,
             includedIds,
             priceInputs,
+            acknowledgedResources,
+            acknowledgedItemResources,
             timestamp: Date.now(),
           }),
         );
@@ -295,12 +310,14 @@ const Index = () => {
       quantitiesToPersist: quantities,
       includedIds: profitResults.map((r) => r.item.id),
       priceInputs: nextPriceInputs,
+      acknowledgedResources: ackResourcesState,
+      acknowledgedItemResources: ackItemResourcesState,
     });
+    schedulePersist();
   };
 
   const handleBackToSearch = () => {
     setViewState("search");
-    setResults([]);
   };
 
   const handleDismissRestoredAnalysis = () => {
@@ -311,6 +328,10 @@ const Index = () => {
     setQuantities({});
     setIncludedIdsState([]);
     setPriceInputsState({});
+    setAckResourcesState([]);
+    setAckItemResourcesState({});
+    setAckResourcesState([]);
+    setAckItemResourcesState({});
     try {
       localStorage.removeItem(lastAnalysisKey);
     } catch (err) {
@@ -322,17 +343,19 @@ const Index = () => {
     const id = `${Date.now()}`;
     const name = `Analyse ${savedAnalyses.length + 1}`;
     const date = new Date().toLocaleString();
-    const payload: SavedAnalysis = {
-      id,
-      name,
-      date,
-      items: selectedItems,
-      results: latestEditableResults.length ? latestEditableResults : results,
-      dataset: datasetVersion,
-      quantities,
-      includedIds: includedIdsState.length ? includedIdsState : (latestEditableResults.length ? latestEditableResults : results).map((r) => r.item.id),
-      priceInputs: priceInputsState,
-    };
+      const payload: SavedAnalysis = {
+        id,
+        name,
+        date,
+        items: selectedItems,
+        results: latestEditableResults.length ? latestEditableResults : results,
+        dataset: datasetVersion,
+        quantities,
+        includedIds: includedIdsState.length ? includedIdsState : (latestEditableResults.length ? latestEditableResults : results).map((r) => r.item.id),
+        priceInputs: priceInputsState,
+        acknowledgedResources: ackResourcesState,
+        acknowledgedItemResources: ackItemResourcesState,
+      };
     setSavedAnalyses((prev) => {
       const next = [...prev, payload];
       try {
@@ -354,6 +377,8 @@ const Index = () => {
     setQuantities(analysis.quantities || {});
     setIncludedIdsState(analysis.includedIds || []);
     setPriceInputsState(analysis.priceInputs || {});
+    setAckResourcesState(analysis.acknowledgedResources || []);
+    setAckItemResourcesState(analysis.acknowledgedItemResources || {});
     setViewState("results");
     persistLastAnalysis({
       items: analysis.items,
@@ -361,22 +386,36 @@ const Index = () => {
       quantitiesToPersist: analysis.quantities,
       includedIds: analysis.includedIds,
       priceInputs: analysis.priceInputs,
+      acknowledgedResources: analysis.acknowledgedResources,
+      acknowledgedItemResources: analysis.acknowledgedItemResources,
     });
+    schedulePersist();
   };
 
   useEffect(() => {
-    if (viewState !== "results") return;
-    const resultsToPersist = latestEditableResults.length ? latestEditableResults : results;
-    if (!resultsToPersist.length) return;
-    const included = includedIdsState.length ? includedIdsState : resultsToPersist.map((r) => r.item.id);
-    persistLastAnalysis({
-      items: selectedItems,
-      resultsToPersist,
-      quantitiesToPersist: quantities,
-      includedIds: included,
-      priceInputs: priceInputsState,
-    });
-  }, [viewState, latestEditableResults, results, selectedItems, quantities, includedIdsState, priceInputsState, persistLastAnalysis]);
+    return () => {
+      if (persistDebounceRef.current) clearTimeout(persistDebounceRef.current);
+    };
+  }, []);
+
+  const schedulePersist = useCallback(() => {
+    if (persistDebounceRef.current) clearTimeout(persistDebounceRef.current);
+    persistDebounceRef.current = setTimeout(() => {
+      if (viewState !== "results") return;
+      const resultsToPersist = latestEditableResults.length ? latestEditableResults : results;
+      if (!resultsToPersist.length) return;
+      const included = includedIdsState.length ? includedIdsState : resultsToPersist.map((r) => r.item.id);
+      persistLastAnalysis({
+        items: selectedItems,
+        resultsToPersist,
+        quantitiesToPersist: quantities,
+        includedIds: included,
+        priceInputs: priceInputsState,
+        acknowledgedResources: ackResourcesState,
+        acknowledgedItemResources: ackItemResourcesState,
+      });
+    }, 300);
+  }, [viewState, latestEditableResults, results, includedIdsState, selectedItems, quantities, priceInputsState, ackResourcesState, ackItemResourcesState, persistLastAnalysis]);
 
   return (
     <div className="min-h-screen relative">
@@ -513,12 +552,77 @@ const Index = () => {
         onBack={handleBackToSearch}
         onSave={selectedItems.length > 0 && results.length > 0 ? handleSaveAnalysis : undefined}
         quantities={quantities}
-        onQuantityChange={handleQuantityChange}
+        onQuantityChange={(id, qty) => {
+          handleQuantityChange(id, qty);
+          schedulePersist();
+        }}
+        onQuantityChangeAll={(qty) => {
+          setQuantities((prev) => {
+            const next: Record<number, number> = {};
+            Object.keys(prev).forEach((key) => {
+              next[Number(key)] = qty;
+            });
+            return next;
+          });
+          setResults((prev) => {
+            return prev.map((r) => {
+              const prevQty = r.quantity ?? 1;
+              const factor = qty / prevQty;
+              const resources = (r.resources ?? []).map((res) => {
+                const totalQuantity = (res.totalQuantity ?? 0) * factor;
+                const totalCost = totalQuantity * res.unitPrice;
+                return { ...res, totalQuantity, totalCost };
+              });
+              const costTotal = resources.reduce((sum, res) => sum + res.totalCost, 0);
+              const revenue = r.hdvPrice * qty;
+              const benefit = revenue - costTotal;
+              const marginPercent = revenue > 0 ? (benefit / revenue) * 100 : 0;
+              return { ...r, quantity: qty, resources, costTotal, benefit, marginPercent };
+            });
+          });
+          setLatestEditableResults((prev) => {
+            return prev.map((r) => {
+              const prevQty = r.quantity ?? 1;
+              const factor = qty / prevQty;
+              const resources = (r.resources ?? []).map((res) => {
+                const totalQuantity = (res.totalQuantity ?? 0) * factor;
+                const totalCost = totalQuantity * res.unitPrice;
+                return { ...res, totalQuantity, totalCost };
+              });
+              const costTotal = resources.reduce((sum, res) => sum + res.totalCost, 0);
+              const revenue = r.hdvPrice * qty;
+              const benefit = revenue - costTotal;
+              const marginPercent = revenue > 0 ? (benefit / revenue) * 100 : 0;
+              return { ...r, quantity: qty, resources, costTotal, benefit, marginPercent };
+            });
+          });
+          schedulePersist();
+        }}
         initialIncludedIds={includedIdsState}
-        onIncludedIdsChange={(ids) => setIncludedIdsState(ids)}
+        onIncludedIdsChange={(ids) => {
+          setIncludedIdsState(ids);
+          schedulePersist();
+        }}
         initialPriceInputs={priceInputsState}
-        onPriceInputsChange={(inputs) => setPriceInputsState(inputs)}
-        onResultsChange={(next) => setLatestEditableResults(next)}
+        onPriceInputsChange={(inputs) => {
+          setPriceInputsState(inputs);
+          schedulePersist();
+        }}
+        initialAcknowledgedResources={ackResourcesState}
+        onAcknowledgedResourcesChange={(keys) => {
+          setAckResourcesState(keys);
+          schedulePersist();
+        }}
+        initialAcknowledgedItemResources={ackItemResourcesState}
+        onAcknowledgedItemResourcesChange={(map) => {
+          setAckItemResourcesState(map);
+          schedulePersist();
+        }}
+        onResultsChange={(next) => {
+          setResults(next);
+          setLatestEditableResults(next);
+          schedulePersist();
+        }}
       />
 
               {savedAnalyses.length > 0 && (

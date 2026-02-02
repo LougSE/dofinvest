@@ -5,6 +5,25 @@
 - Use it as a quick reference to see what changed (UI/UX, data, logic) and when.
 - Add new entries at the bottom with the date and concise bullets (avoid verbosity).
 
+## 2026-02-02
+- Persisted all analysis state (HDV prices, quantities, Include flags, grayed resources) via debounced autosave; price edits no longer reset.
+- KPI “Total resource cost” now ignores grayed resources; added “Gray all / Ungray all” toggle in aggregated resources.
+- Added aggregated-resources “Used by” tooltip and global gray toggle; “Add items” keeps the current analysis.
+
+## 2026-02-XX
+- Added “Used by” tooltip on aggregated resources (lists consuming crafts and quantities) and persistence of grayed resources/ingredients.
+- Full analysis state persisted (incl. grayed cells) and restored without loss from the analysis page.
+- Include/uninclude no longer causes scroll; “Add items” keeps the current analysis in place.
+
+## 2026-01-27
+- Persisted last analysis reliably and made resume optional (prompt on landing instead of auto-redirect); centralized timestamped saves across analyze/load/edits.
+- “Inclure” toggle restored: excluded rows stay listed, grayed, sorted after included ones, and excluded from calculations.
+- Fixed missing React keys in profitability rows to clear warnings.
+
+## 2026-01-25
+- Added in-analysis resource price editing via hover “Modifier” buttons and a modal (applies to detailed and aggregated resources).
+- Build adjusted to support the new price modal.
+
 ## 2026-01-08
 - Search: tag chips toggleable (on/off) acting as true filters; alphabetized list; layout back to wide search.
 - HDV price inputs now buffered and committed on blur/Enter to prevent rows from jumping during typing.
@@ -12,16 +31,6 @@
 - Aggregated resources: unit price next to quantity (gray), compact cards; graying clickable preserved (aggregated and per item).
 - Item expansions: removed “Recette de craft” header and cost sort button to simplify UI.
 - Modal HDV: items sorted with non-locked first (aligned with resources).
-
-## 2026-01-25
-- Added in-analysis resource price editing via hover “Modifier” buttons and a modal (applies to detailed and aggregated resources).
-- Build adjusted to support the new price modal.
-
-
-## 2026-01-27
-- Persisted last analysis reliably and made resume optional (prompt on landing instead of auto-redirect); centralized timestamped saves across analyze/load/edits.
-- “Inclure” toggle restored: excluded rows stay listed, grayed, sorted after included ones, and excluded from calculations.
-- Fixed missing React keys in profitability rows to clear warnings.
 
 ## 2026-01-03
 - Quantities adjustable only on the results page (no quantity fields in the selection panel). Quantity input restyled to match the theme.

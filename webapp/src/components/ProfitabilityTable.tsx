@@ -10,6 +10,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   TrendingUp,
   TrendingDown,
   ArrowUpDown,
@@ -34,11 +39,16 @@ interface ProfitabilityTableProps {
   onSave?: () => void;
   quantities: Record<number, number>;
   onQuantityChange: (id: number, qty: number) => void;
+  onQuantityChangeAll?: (qty: number) => void;
   initialIncludedIds?: number[];
   onIncludedIdsChange?: (ids: number[]) => void;
   initialPriceInputs?: Record<number, string>;
   onPriceInputsChange?: (inputs: Record<number, string>) => void;
   onResultsChange?: (results: ProfitabilityResult[]) => void;
+  initialAcknowledgedResources?: string[];
+  onAcknowledgedResourcesChange?: (keys: string[]) => void;
+  initialAcknowledgedItemResources?: Record<number, string[]>;
+  onAcknowledgedItemResourcesChange?: (map: Record<number, string[]>) => void;
 }
 
 type SortKey = "benefit" | "marginPercent" | "hdvPrice" | "costTotal" | "multiplier";
@@ -49,11 +59,16 @@ const ProfitabilityTable = ({
   onSave,
   quantities,
   onQuantityChange,
+  onQuantityChangeAll,
   initialIncludedIds,
   onIncludedIdsChange,
   initialPriceInputs,
   onPriceInputsChange,
   onResultsChange,
+  initialAcknowledgedResources,
+  onAcknowledgedResourcesChange,
+  initialAcknowledgedItemResources,
+  onAcknowledgedItemResourcesChange,
 }: ProfitabilityTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("marginPercent");
   const [sortDesc, setSortDesc] = useState(true);
@@ -81,6 +96,19 @@ const ProfitabilityTable = ({
     }
     setAcknowledgedResourceIds(new Set());
     setAcknowledgedItemResources({});
+    if (initialAcknowledgedResources) {
+      setAcknowledgedResourceIds(new Set(initialAcknowledgedResources));
+    }
+    if (initialAcknowledgedItemResources) {
+      const next: Record<number, Set<string>> = {};
+      Object.entries(initialAcknowledgedItemResources).forEach(([id, arr]) => {
+        next[Number(id)] = new Set(arr);
+      });
+      setAcknowledgedItemResources(next);
+    }
+  }, [results, initialIncludedIds, initialAcknowledgedResources, initialAcknowledgedItemResources, onResultsChange]);
+
+  useEffect(() => {
     const initialPrices: Record<number, string> = {};
     if (initialPriceInputs && Object.keys(initialPriceInputs).length) {
       setPriceInputs(initialPriceInputs);
@@ -90,7 +118,7 @@ const ProfitabilityTable = ({
       });
       setPriceInputs(initialPrices);
     }
-  }, [results, initialIncludedIds, initialPriceInputs]);
+  }, [initialPriceInputs, results]);
 
   const itemTypes = useMemo(() => {
     const types = new Set(editableResults.map((r) => r.item.type));
@@ -167,8 +195,9 @@ const ProfitabilityTable = ({
 
   const commitPriceChange = (id: number, raw: string) => {
     const clean = parseInt(raw.replace(/\D/g, "")) || 0;
-    setPriceInputs((prev) => ({ ...prev, [id]: clean ? String(clean) : "" }));
-    onPriceInputsChange?.({ ...priceInputs, [id]: clean ? String(clean) : "" });
+    const nextInputs = { ...priceInputs, [id]: clean ? String(clean) : "" };
+    setPriceInputs(nextInputs);
+    onPriceInputsChange?.(nextInputs);
     setEditableResults((prev) => {
       const next = prev.map((res) => {
         if (res.item.id !== id) return res;
@@ -254,12 +283,34 @@ const ProfitabilityTable = ({
     return resourceSortDesc ? arr.reverse() : arr;
   }, [editableResults, resourceSortDesc, includedIds]);
 
+  const aggregatedResourceUsage = useMemo(() => {
+    const usage: Record<string, { itemId: number; itemName: string; quantity: number }[]> = {};
+    editableResults.forEach((res) => {
+      if (!includedIds.has(res.item.id)) return;
+      (res.resources ?? []).forEach((r) => {
+        const key = getResourceKey(r);
+        const qty = r.totalQuantity ?? r.quantity ?? 0;
+        if (!usage[key]) usage[key] = [];
+        usage[key].push({ itemId: res.item.id, itemName: res.item.name, quantity: qty });
+      });
+    });
+    return usage;
+  }, [editableResults, includedIds]);
+
+  const aggregatedTotalCostAll = useMemo(
+    () => aggregatedResources.reduce((sum, r) => sum + r.totalCost, 0),
+    [aggregatedResources],
+  );
+
   const aggregatedTotalCost = useMemo(
     () => aggregatedResources
       .filter((r) => !acknowledgedResourceIds.has(r.key))
       .reduce((sum, r) => sum + r.totalCost, 0),
     [aggregatedResources, acknowledgedResourceIds],
   );
+
+  const allAggregatedAcknowledged = aggregatedResources.length > 0
+    && aggregatedResources.every((r) => acknowledgedResourceIds.has(r.key));
 
   useEffect(() => {
     setAcknowledgedResourceIds((prev) => {
@@ -268,16 +319,28 @@ const ProfitabilityTable = ({
       prev.forEach((id) => {
         if (existingIds.has(id)) next.add(id);
       });
+      if (onAcknowledgedResourcesChange) {
+        onAcknowledgedResourcesChange(Array.from(next));
+      }
       return next;
     });
-  }, [aggregatedResources]);
+  }, [aggregatedResources, onAcknowledgedResourcesChange]);
 
   const toggleAcknowledgedItemResource = (itemId: number, resKey: string) => {
     setAcknowledgedItemResources((prev) => {
       const current = prev[itemId] ? new Set(prev[itemId]) : new Set<string>();
       if (current.has(resKey)) current.delete(resKey);
       else current.add(resKey);
-      return { ...prev, [itemId]: current };
+      const next = { ...prev, [itemId]: current };
+      if (onAcknowledgedItemResourcesChange) {
+        const serialized: Record<number, string[]> = {};
+        Object.entries(next).forEach(([id, set]) => {
+          const arr = Array.from(set as Set<string>);
+          if (arr.length) serialized[Number(id)] = arr;
+        });
+        onAcknowledgedItemResourcesChange(serialized);
+      }
+      return next;
     });
   };
 
@@ -338,11 +401,11 @@ const ProfitabilityTable = ({
   return (
     <>
       <div className="space-y-6 pb-8">
-      {/* Stats cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {/* Total benefit */}
-        <div className="card-dofus rounded-xl p-5">
-          <p className="text-sm text-muted-foreground mb-1">Bénéfice total potentiel</p>
+        {/* Stats cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {/* Total benefit */}
+          <div className="card-dofus rounded-xl p-5">
+            <p className="text-sm text-muted-foreground mb-1">Bénéfice total potentiel</p>
           <p className={cn(
             "text-2xl font-bold font-heading",
             totalBenefit >= 0 ? "text-profit" : "text-loss"
@@ -351,13 +414,13 @@ const ProfitabilityTable = ({
           </p>
         </div>
 
-        {/* Total cost */}
-        <div className="card-dofus rounded-xl p-5">
-          <p className="text-sm text-muted-foreground mb-1">Coût total des ressources</p>
-          <p className="text-2xl font-bold font-heading text-loss">
-            {formatKamas(aggregatedTotalCost)} kamas
-          </p>
-        </div>
+          {/* Total cost */}
+          <div className="card-dofus rounded-xl p-5">
+            <p className="text-sm text-muted-foreground mb-1">Coût total des ressources</p>
+            <p className="text-2xl font-bold font-heading text-loss">
+            {formatKamas(aggregatedTotalCostAll)} kamas
+            </p>
+          </div>
 
         {/* Best item */}
         {bestItem && (
@@ -382,20 +445,20 @@ const ProfitabilityTable = ({
       </div>
 
       {/* Actions */}
-        <div className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={onBack}>
-            ← Nouvelle analyse
+      <div className="flex flex-wrap gap-3 items-center">
+        <Button variant="outline" onClick={onBack}>
+          ← Ajouter des items
+        </Button>
+        <Button variant="limeOutline" onClick={exportToCsv} className="gap-2">
+          <Download className="w-4 h-4" />
+          Exporter CSV
+        </Button>
+        {onSave && (
+          <Button variant="lime" onClick={onSave} className="gap-2">
+            Sauvegarder l'analyse
           </Button>
-          <Button variant="limeOutline" onClick={exportToCsv} className="gap-2">
-            <Download className="w-4 h-4" />
-            Exporter CSV
-          </Button>
-          {onSave && (
-            <Button variant="lime" onClick={onSave} className="gap-2">
-              Sauvegarder l'analyse
-            </Button>
-          )}
-        </div>
+        )}
+      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4 p-4 card-dofus rounded-xl">
@@ -455,8 +518,8 @@ const ProfitabilityTable = ({
           <TableHeader>
             <TableRow className="border-border hover:bg-transparent">
               <TableHead className="text-foreground">Item</TableHead>
-              <TableHead className="text-center">
-                <div className="flex items-center justify-center gap-2">
+              <TableHead className="text-center w-28">
+                <div className="flex items-center justify-center gap-3 pl-2">
                   <input
                     type="checkbox"
                     checked={allIncluded}
@@ -472,7 +535,24 @@ const ProfitabilityTable = ({
                     }}
                     className="h-4 w-4"
                   />
-                  <span className="text-xs text-muted-foreground">Qté</span>
+                  {typeof onQuantityChangeAll === "function" ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Qté</span>
+                      <input
+                        type="number"
+                        min={1}
+                        placeholder="–"
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={(e) => {
+                          const newQty = Math.max(1, Number(e.target.value) || 1);
+                          onQuantityChangeAll(newQty);
+                        }}
+                        className="input-dofus no-spin w-14 h-7 rounded px-2 text-[11px] text-right bg-secondary/60 border border-border focus:border-primary focus-visible:ring-0"
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Qté</span>
+                  )}
                 </div>
               </TableHead>
               <TableHead
@@ -566,6 +646,8 @@ const ProfitabilityTable = ({
                           });
                         }}
                         className="h-4 w-4"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onFocus={(e) => e.target.blur()}
                       />
                       <span className="text-xs text-muted-foreground">Inclure</span>
                       <input
@@ -582,7 +664,7 @@ const ProfitabilityTable = ({
                             const next = prev.map((r) => {
                               if (r.item.id !== result.item.id) return r;
                               const scaledResources = r.resources.map((res) => {
-                                const totalQuantity = Math.round(res.totalQuantity * factor);
+                                const totalQuantity = Math.round((res.totalQuantity ?? res.quantity ?? 0) * factor);
                                 const totalCost = totalQuantity * res.unitPrice;
                                 return { ...res, totalQuantity, totalCost };
                               });
@@ -768,6 +850,21 @@ const ProfitabilityTable = ({
                 Total: {formatKamas(aggregatedTotalCost)} kamas
               </span>
               <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setAcknowledgedResourceIds((prev) => {
+                    if (allAggregatedAcknowledged) return new Set<string>();
+                    return new Set(aggregatedResources.map((r) => r.key));
+                  });
+                  onAcknowledgedResourcesChange?.(
+                    allAggregatedAcknowledged ? [] : aggregatedResources.map((r) => r.key)
+                  );
+                }}
+              >
+                {allAggregatedAcknowledged ? "Tout dégriser" : "Tout griser"}
+              </Button>
+              <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setResourceSortDesc((prev) => !prev)}
@@ -778,55 +875,75 @@ const ProfitabilityTable = ({
           </div>
           <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
             {aggregatedResources.map((res) => (
-              <div
-                key={res.key}
-                onClick={() => {
-                  setAcknowledgedResourceIds((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(res.key)) next.delete(res.key);
-                    else next.add(res.key);
-                    return next;
-                  });
-                }}
-                className={cn(
-                  "group relative flex items-center gap-3 rounded-lg border border-border bg-background/60 p-3 cursor-pointer transition",
-                  acknowledgedResourceIds.has(res.key) && "opacity-50 grayscale"
-                )}
-              >
-                <button
-                  className="hidden group-hover:flex absolute top-2 right-2 text-[10px] px-2 py-1 rounded bg-secondary text-foreground border border-border"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openEditResource(res as Resource, res.key);
-                  }}
-                >
-                  Modifier
-                </button>
-                <img
-                  src={res.iconUrl}
-                  alt={res.name}
-                  className="h-10 w-10 rounded"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(res.name)}`;
-                    e.currentTarget.src = fallback;
-                  }}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground truncate">{res.name}</p>
-                  <p className="text-sm font-semibold text-primary flex items-center gap-2">
-                    <span>{res.totalQuantity} unités</span>
-                    <span className="text-xs text-muted-foreground">{formatKamas(res.unitPrice)} u</span>
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Coût total</p>
-                  <p className="font-semibold" style={costColorStyle(res.totalCost)}>
-                    {formatKamas(res.totalCost)}
-                  </p>
-                </div>
-              </div>
+              <Tooltip key={res.key} delayDuration={50}>
+                <TooltipTrigger asChild>
+                  <div
+                    onClick={() => {
+                      setAcknowledgedResourceIds((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(res.key)) next.delete(res.key);
+                        else next.add(res.key);
+                        if (onAcknowledgedResourcesChange) {
+                          onAcknowledgedResourcesChange(Array.from(next));
+                        }
+                        return next;
+                      });
+                    }}
+                    className={cn(
+                      "group relative flex items-center gap-3 rounded-lg border border-border bg-background/60 p-3 cursor-pointer transition",
+                      acknowledgedResourceIds.has(res.key) && "opacity-50 grayscale"
+                    )}
+                  >
+                    <button
+                      className="hidden group-hover:flex absolute top-2 right-2 text-[10px] px-2 py-1 rounded bg-secondary text-foreground border border-border"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditResource(res as Resource, res.key);
+                      }}
+                    >
+                      Modifier
+                    </button>
+                    <img
+                      src={res.iconUrl}
+                      alt={res.name}
+                      className="h-10 w-10 rounded"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        const fallback = `https://api.dicebear.com/7.x/shapes/svg?seed=${encodeURIComponent(res.name)}`;
+                        e.currentTarget.src = fallback;
+                      }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{res.name}</p>
+                      <p className="text-sm font-semibold text-primary flex items-center gap-2">
+                        <span>{res.totalQuantity} unités</span>
+                        <span className="text-xs text-muted-foreground">{formatKamas(res.unitPrice)} u</span>
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-muted-foreground">Coût total</p>
+                      <p className="font-semibold" style={costColorStyle(res.totalCost)}>
+                        {formatKamas(res.totalCost)}
+                      </p>
+                    </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs space-y-1">
+                  <p className="text-xs font-semibold">Utilisé par :</p>
+                  {(aggregatedResourceUsage[res.key] ?? []).slice(0, 6).map((u) => (
+                    <p key={`${res.key}-${u.itemId}`} className="text-xs text-muted-foreground truncate">
+                      {u.itemName} — {u.quantity}x
+                    </p>
+                  ))}
+                  {!(aggregatedResourceUsage[res.key] ?? []).length && (
+                    <p className="text-xs text-muted-foreground">Aucun détail</p>
+                  )}
+                  {(aggregatedResourceUsage[res.key] ?? []).length > 6 && (
+                    <p className="text-[10px] text-muted-foreground">+{(aggregatedResourceUsage[res.key] ?? []).length - 6} autres</p>
+                  )}
+                </TooltipContent>
+              </Tooltip>
             ))}
           </div>
         </div>
