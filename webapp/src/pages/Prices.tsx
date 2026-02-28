@@ -43,7 +43,7 @@ const historyChartConfig = {
 };
 
 const Prices = () => {
-  const [datasetVersion, setDatasetVersion] = useState<"20" | "129">("20");
+  const [datasetVersion, setDatasetVersion] = useState<"20" | "129">("129");
   const [server] = useState("Abrak");
   const { items: searchResults } = useItemsSearch({ query: "", craftableOnly: true, page: 1, dataset: datasetVersion });
   const [selection, setSelection] = useState<DofusItem[]>([]);

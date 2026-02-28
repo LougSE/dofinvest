@@ -69,7 +69,7 @@ const Index = () => {
     } catch (err) {
       console.error("Failed to read dataset pref", err);
     }
-    return "20";
+    return "129";
   });
   const [tagFilter, setTagFilter] = useState("all");
   const [savedAnalyses, setSavedAnalyses] = useState<SavedAnalysis[]>([]);

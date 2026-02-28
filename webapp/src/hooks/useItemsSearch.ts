@@ -13,7 +13,7 @@ export interface UseItemsSearchParams {
   dataset?: "20" | "129";
 }
 
-export function useItemsSearch({ query, craftableOnly = true, page = 1, pageSize = PAGE_SIZE, dataset = "20" }: UseItemsSearchParams) {
+export function useItemsSearch({ query, craftableOnly = true, page = 1, pageSize = PAGE_SIZE, dataset = "129" }: UseItemsSearchParams) {
   const [items, setItems] = useState<DofusItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

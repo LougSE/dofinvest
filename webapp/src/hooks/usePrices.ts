@@ -126,7 +126,7 @@ function normalizeResourcePriceData(
   };
 }
 
-export function usePrices(server: string, dataset: "20" | "129" = "20") {
+export function usePrices(server: string, dataset: "20" | "129" = "129") {
   const [resourcePrices, setResourcePrices] = useState<Record<number, number>>({});
   const [itemPrices, setItemPrices] = useState<Record<number, number>>({});
   const [resourcePriceHistory, setResourcePriceHistory] = useState<PriceHistoryMap>({});

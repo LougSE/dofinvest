@@ -8,7 +8,7 @@ function normalizeResourceName(name: string) {
   return name.trim().toLowerCase();
 }
 
-async function loadData(dataset: "20" | "129" = "20"): Promise<DofusItem[]> {
+async function loadData(dataset: "20" | "129" = "129"): Promise<DofusItem[]> {
   if (caches[dataset]) return caches[dataset] as DofusItem[];
   const path = dataset === "129" ? "/data/items-129.json" : "/data/items.json";
   const response = await fetch(path);
@@ -18,7 +18,7 @@ async function loadData(dataset: "20" | "129" = "20"): Promise<DofusItem[]> {
   return caches[dataset] as DofusItem[];
 }
 
-export async function getLocalResourceAliases(dataset: "20" | "129" = "20"): Promise<Record<string, string[]>> {
+export async function getLocalResourceAliases(dataset: "20" | "129" = "129"): Promise<Record<string, string[]>> {
   if (resourceAliasCaches[dataset]) return resourceAliasCaches[dataset] as Record<string, string[]>;
 
   if (dataset === "129") {
@@ -53,7 +53,7 @@ export async function getLocalResourceAliases(dataset: "20" | "129" = "20"): Pro
 export async function searchLocalItems({
   query,
   craftableOnly,
-  dataset = "20",
+  dataset = "129",
 }: {
   query: string;
   craftableOnly?: boolean;
@@ -69,7 +69,7 @@ export async function searchLocalItems({
   return filtered;
 }
 
-export async function getLocalRecipe(id: number, dataset: "20" | "129" = "20"): Promise<RecipeIngredient[]> {
+export async function getLocalRecipe(id: number, dataset: "20" | "129" = "129"): Promise<RecipeIngredient[]> {
   const data = await loadData(dataset);
   const item = data.find((it) => it.id === id);
   return item?.recipe || [];
