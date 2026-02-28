@@ -11,6 +11,7 @@ import { DofusItem, PriceHistoryEntry, Resource } from "@/types/dofus";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { searchLocalItems } from "@/lib/localDataClient";
+import resourceAliases129 from "@/data/resourceAliases129.json";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
@@ -25,7 +26,7 @@ type HistoryEntityType = "resource" | "item";
 type HistoryRange = "24h" | "7d" | "30d" | "all";
 
 interface HistoryOption {
-  id: number;
+  id: string;
   label: string;
   type: HistoryEntityType;
 }
@@ -109,30 +110,69 @@ const Prices = () => {
   };
 
   const itemNameMap = useMemo(() => {
-    const map: Record<number, string> = {};
+    const map: Record<string, string> = {};
     allItems.forEach((item) => {
-      map[item.id] = item.name;
+      map[String(item.id)] = item.name;
       (item.recipe || []).forEach((ingredient) => {
-        if (!map[ingredient.itemId]) {
-          map[ingredient.itemId] = ingredient.name;
+        const ingredientId = String(ingredient.itemId);
+        if (!map[ingredientId]) {
+          map[ingredientId] = ingredient.name;
         }
       });
     });
     return map;
   }, [allItems]);
 
+  const aliasNameMap = useMemo(() => {
+    if (datasetVersion !== "129") return {} as Record<string, string>;
+
+    const map: Record<string, string> = {};
+    Object.entries(resourceAliases129).forEach(([name, entry]) => {
+      entry.aliasIds.forEach((id) => {
+        map[id] = name;
+      });
+    });
+    return map;
+  }, [datasetVersion]);
+
+  const aliasCanonicalIdMap = useMemo(() => {
+    if (datasetVersion !== "129") return {} as Record<string, string>;
+
+    const map: Record<string, string> = {};
+    Object.values(resourceAliases129).forEach((entry) => {
+      entry.aliasIds.forEach((id) => {
+        map[id] = entry.canonicalId;
+      });
+    });
+    return map;
+  }, [datasetVersion]);
+
+  const aliasIdsByCanonicalId = useMemo(() => {
+    if (datasetVersion !== "129") return {} as Record<string, string[]>;
+
+    const map: Record<string, string[]> = {};
+    Object.values(resourceAliases129).forEach((entry) => {
+      map[entry.canonicalId] = entry.aliasIds;
+    });
+    return map;
+  }, [datasetVersion]);
+
   const historyOptions = useMemo<HistoryOption[]>(() => {
-    const resourceIds = Array.from(new Set([
-      ...Object.keys(resourcePriceHistory).map(Number),
-      ...Object.keys(resourcePrices).map(Number),
+    const rawResourceIds = Array.from(new Set([
+      ...Object.keys(resourcePriceHistory),
+      ...Object.keys(resourcePrices),
     ]));
+    const resourceIds = Array.from(
+      new Set(rawResourceIds.map((id) => aliasCanonicalIdMap[id] ?? id)),
+    );
     const itemIds = Array.from(new Set([
-      ...Object.keys(itemPriceHistory).map(Number),
-      ...Object.keys(itemPrices).map(Number),
+      ...Object.keys(itemPriceHistory),
+      ...Object.keys(itemPrices),
     ]));
 
-    const buildLabel = (id: number, type: HistoryEntityType) => {
-      const name = itemNameMap[id] || `${type === "resource" ? "Resource" : "Item"} #${id}`;
+    const buildLabel = (id: string, type: HistoryEntityType) => {
+      const aliasName = type === "resource" ? aliasNameMap[id] : undefined;
+      const name = itemNameMap[id] || aliasName || `${type === "resource" ? "Resource" : "Item"} #${id}`;
       return name;
     };
 
@@ -145,7 +185,7 @@ const Prices = () => {
       .sort((a, b) => a.label.localeCompare(b.label));
 
     return [...resources, ...items];
-  }, [resourcePriceHistory, itemPriceHistory, resourcePrices, itemPrices, itemNameMap]);
+  }, [resourcePriceHistory, itemPriceHistory, resourcePrices, itemPrices, itemNameMap, aliasNameMap, aliasCanonicalIdMap]);
 
   const historyOptionsForType = useMemo(
     () => historyOptions.filter((option) => option.type === historyType),
@@ -165,12 +205,25 @@ const Prices = () => {
   }, [historyOptionsForType, historyTargetId]);
 
   const selectedHistoryEntries = useMemo<PriceHistoryEntry[]>(() => {
-    const targetId = Number(historyTargetId);
-    if (!targetId) return [];
-    return historyType === "resource"
-      ? resourcePriceHistory[targetId] ?? []
-      : itemPriceHistory[targetId] ?? [];
-  }, [historyTargetId, historyType, resourcePriceHistory, itemPriceHistory]);
+    if (!historyTargetId) return [];
+    if (historyType === "item") {
+      return itemPriceHistory[historyTargetId] ?? [];
+    }
+
+    const aliasIds = aliasIdsByCanonicalId[historyTargetId] ?? [historyTargetId];
+    const merged = aliasIds
+      .flatMap((id) => resourcePriceHistory[id] ?? [])
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    const deduped: PriceHistoryEntry[] = [];
+    merged.forEach((entry) => {
+      const last = deduped[deduped.length - 1];
+      if (last && last.price === entry.price && last.timestamp === entry.timestamp) return;
+      deduped.push(entry);
+    });
+
+    return deduped;
+  }, [historyTargetId, historyType, resourcePriceHistory, itemPriceHistory, aliasIdsByCanonicalId]);
 
   const filteredHistoryEntries = useMemo<PriceHistoryEntry[]>(() => {
     if (historyRange === "all") return selectedHistoryEntries;

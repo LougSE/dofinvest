@@ -135,6 +135,8 @@ export function usePrices(server: string, dataset: "20" | "129" = "20") {
   const itemPricesRef = useRef<PricesMap>({});
   const resourceHistoryRef = useRef<PriceHistoryMap>({});
   const itemHistoryRef = useRef<PriceHistoryMap>({});
+  const resourceAliasesRef = useRef<Record<string, string[]>>({});
+  const resourceAliasByIdRef = useRef<Record<string, string[]>>({});
 
   const persistState = useCallback((resources: PricesMap, items: PricesMap, resourceHistory: PriceHistoryMap, itemHistory: PriceHistoryMap) => {
     resourcePricesRef.current = resources;
@@ -156,6 +158,10 @@ export function usePrices(server: string, dataset: "20" | "129" = "20") {
       console.error("Failed to persist prices", err);
     }
   }, [server, dataset]);
+
+  const getAliasIdsForResource = useCallback((id: string) => {
+    return resourceAliasByIdRef.current[id] ?? [id];
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -191,6 +197,14 @@ export function usePrices(server: string, dataset: "20" | "129" = "20") {
         }
 
         const aliases = await getLocalResourceAliases(dataset);
+        resourceAliasesRef.current = aliases;
+        const nextAliasById: Record<string, string[]> = {};
+        Object.values(aliases).forEach((ids) => {
+          ids.forEach((id) => {
+            nextAliasById[id] = ids;
+          });
+        });
+        resourceAliasByIdRef.current = nextAliasById;
         const normalizedResources = normalizeResourcePriceData(nextResources, nextResourceHistory, aliases);
         const finalResources = normalizedResources.prices;
         nextResourceHistory = normalizedResources.history;
@@ -228,6 +242,8 @@ export function usePrices(server: string, dataset: "20" | "129" = "20") {
         itemPricesRef.current = {};
         resourceHistoryRef.current = {};
         itemHistoryRef.current = {};
+        resourceAliasesRef.current = {};
+        resourceAliasByIdRef.current = {};
       }
     };
 
@@ -246,23 +262,14 @@ export function usePrices(server: string, dataset: "20" | "129" = "20") {
 
   const updateResourcePrice = (id: number, value: number) => {
     const cleanValue = Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
-    getLocalResourceAliases(dataset)
-      .then((aliases) => {
-        const idKey = String(id);
-        const aliasIds = aliases[Object.keys(aliases).find((name) => aliases[name].includes(idKey)) ?? ""] ?? [idKey];
-        const nextResources = { ...resourcePricesRef.current };
-        aliasIds.forEach((aliasId) => {
-          nextResources[aliasId] = cleanValue;
-        });
-        const nextResourceHistory = appendHistoryEntries(resourcePricesRef.current, nextResources, resourceHistoryRef.current);
-        persistState(nextResources, itemPricesRef.current, nextResourceHistory, itemHistoryRef.current);
-      })
-      .catch((err) => {
-        console.error("Failed to propagate resource aliases", err);
-        const nextResources = { ...resourcePricesRef.current, [String(id)]: cleanValue };
-        const nextResourceHistory = appendHistoryEntries(resourcePricesRef.current, nextResources, resourceHistoryRef.current);
-        persistState(nextResources, itemPricesRef.current, nextResourceHistory, itemHistoryRef.current);
-      });
+    const idKey = String(id);
+    const aliasIds = getAliasIdsForResource(idKey);
+    const nextResources = { ...resourcePricesRef.current };
+    aliasIds.forEach((aliasId) => {
+      nextResources[aliasId] = cleanValue;
+    });
+    const nextResourceHistory = appendHistoryEntries(resourcePricesRef.current, nextResources, resourceHistoryRef.current);
+    persistState(nextResources, itemPricesRef.current, nextResourceHistory, itemHistoryRef.current);
   };
 
   const updateItemPrice = (id: number, value: number) => {

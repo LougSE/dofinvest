@@ -34,7 +34,9 @@ const PriceInputModal = ({
   const [step, setStep] = useState<"resources" | "hdv">("resources");
   const itemIds = useMemo(() => Array.from(new Set(selectedItems.map((item) => item.id))).filter(Boolean), [selectedItems]);
   const { recipes, isLoading: recipesLoading } = useRecipes(itemIds, dataset);
-  const { resourcePrices, itemPrices, updateResourcePrice, updateItemPrice, savePrices, resetPrices } = usePrices(server, dataset);
+  const { resourcePrices, itemPrices, savePrices, resetPrices } = usePrices(server, dataset);
+  const [draftResourcePrices, setDraftResourcePrices] = useState<Record<string, number>>({});
+  const [draftItemPrices, setDraftItemPrices] = useState<Record<string, number>>({});
   const [lockedResources, setLockedResources] = useState<Record<number, boolean>>({});
   const [lockedItems, setLockedItems] = useState<Record<number, boolean>>({});
   const hasInitializedLocks = useRef(false);
@@ -64,6 +66,8 @@ const PriceInputModal = ({
     if (!isOpen) {
       setLockedResources({});
       setLockedItems({});
+      setDraftResourcePrices({});
+      setDraftItemPrices({});
       hasInitializedLocks.current = false;
     }
   }, [isOpen]);
@@ -84,6 +88,16 @@ const PriceInputModal = ({
     }
     setLockedResources(resLocks);
     setLockedItems(itemLocks);
+    setDraftResourcePrices(
+      Object.fromEntries(
+        Object.entries(resourcePrices || {}).map(([id, price]) => [id, Number(price) || 0]),
+      ),
+    );
+    setDraftItemPrices(
+      Object.fromEntries(
+        Object.entries(itemPrices || {}).map(([id, price]) => [id, Number(price) || 0]),
+      ),
+    );
     hasInitializedLocks.current = true;
   }, [isOpen, resourcePrices, itemPrices]);
 
@@ -121,13 +135,13 @@ const PriceInputModal = ({
   const handleResourcePriceChange = (id: number, value: string) => {
     if (isLockedResource(id)) return;
     const numValue = parseInt(value.replace(/\D/g, "")) || 0;
-    updateResourcePrice(id, numValue);
+    setDraftResourcePrices((prev) => ({ ...prev, [String(id)]: numValue }));
   };
 
   const handleHdvPriceChange = (id: number, value: string) => {
     if (isLockedItem(id)) return;
     const numValue = parseInt(value.replace(/\D/g, "")) || 0;
-    updateItemPrice(id, numValue);
+    setDraftItemPrices((prev) => ({ ...prev, [String(id)]: numValue }));
   };
 
   const formatKamas = (value: number) => {
@@ -140,16 +154,28 @@ const PriceInputModal = ({
       name: res.name,
       iconUrl: res.iconUrl,
       totalQuantity: res.totalQty,
-      unitPrice: resourcePrices[res.itemId] ?? 0,
-      totalCost: (resourcePrices[res.itemId] ?? 0) * res.totalQty,
+      unitPrice: draftResourcePrices[String(res.itemId)] ?? resourcePrices[res.itemId] ?? 0,
+      totalCost: (draftResourcePrices[String(res.itemId)] ?? resourcePrices[res.itemId] ?? 0) * res.totalQty,
     }));
-    savePrices(resourcePrices, itemPrices);
-    onConfirm(resources, itemPrices);
+    const nextResourcePrices = {
+      ...Object.fromEntries(
+        Object.entries(resourcePrices || {}).map(([id, price]) => [id, Number(price) || 0]),
+      ),
+      ...draftResourcePrices,
+    };
+    const nextItemPrices = {
+      ...Object.fromEntries(
+        Object.entries(itemPrices || {}).map(([id, price]) => [id, Number(price) || 0]),
+      ),
+      ...draftItemPrices,
+    };
+    savePrices(nextResourcePrices, nextItemPrices);
+    onConfirm(resources, Object.fromEntries(Object.entries(nextItemPrices).map(([id, price]) => [Number(id), price])));
     onClose();
   };
 
   const totalResourceCost = resourceList.reduce(
-    (sum, res) => sum + (resourcePrices[res.itemId] ?? 0) * res.totalQty,
+    (sum, res) => sum + (draftResourcePrices[String(res.itemId)] ?? resourcePrices[res.itemId] ?? 0) * res.totalQty,
     0
   );
 
@@ -213,7 +239,7 @@ const PriceInputModal = ({
                         <>
                           <Input
                             type="text"
-                            value={formatKamas(resourcePrices[res.itemId] ?? 0)}
+                            value={formatKamas(draftResourcePrices[String(res.itemId)] ?? resourcePrices[res.itemId] ?? 0)}
                             onChange={(e) => handleResourcePriceChange(res.itemId, e.target.value)}
                             className={cn(
                               "w-28 text-right input-dofus",
@@ -239,7 +265,7 @@ const PriceInputModal = ({
                   </div>
                   <div className="text-right min-w-[100px]">
                     <p className="text-sm font-medium text-foreground">
-                      {formatKamas((resourcePrices[res.itemId] ?? 0) * res.totalQty)}
+                      {formatKamas((draftResourcePrices[String(res.itemId)] ?? resourcePrices[res.itemId] ?? 0) * res.totalQty)}
                     </p>
                     <p className="text-xs text-muted-foreground">Total</p>
                   </div>
@@ -282,7 +308,7 @@ const PriceInputModal = ({
                         <>
                           <Input
                             type="text"
-                            value={formatKamas(itemPrices[item.id] ?? 0)}
+                            value={formatKamas(draftItemPrices[String(item.id)] ?? itemPrices[item.id] ?? 0)}
                             onChange={(e) => handleHdvPriceChange(item.id, e.target.value)}
                             className={cn(
                               "w-36 text-right input-dofus",
@@ -347,6 +373,8 @@ const PriceInputModal = ({
                 variant="outline"
                 onClick={() => {
                   resetPrices();
+                  setDraftResourcePrices({});
+                  setDraftItemPrices({});
                 }}
               className="flex-1"
             >

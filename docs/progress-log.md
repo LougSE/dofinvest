@@ -9,6 +9,8 @@
 - Added persistent price history for resources and HDV items; every price edit now records current value plus append-only history in localStorage.
 - Extended `/prices` with history analytics: entity selector, time-range filters (`24h`, `7d`, `30d`, all), KPI cards, trend chart, and recent price journal.
 - Audited the Retro dataset and normalized duplicate resource IDs by name: generated a canonical alias map, rewrote `items-129.json` recipes to canonical IDs, and kept cache/history migration so existing saved prices still resolve.
+- Fixed `/prices` resource history listing to use canonical Retro resource IDs and string-safe identifiers, removing duplicate entries and restoring labels for aliased resources.
+- Hardened resource price persistence: resource alias propagation is now synchronous, and the pre-analysis price modal saves a full local draft atomically on confirm instead of streaming fragile per-keystroke writes.
 
 ## 2026-02-02
 - Persisted all analysis state (HDV prices, quantities, Include flags, grayed resources) via debounced autosave; price edits no longer reset.
