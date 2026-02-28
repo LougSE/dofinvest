@@ -44,11 +44,13 @@ interface ProfitabilityTableProps {
   onIncludedIdsChange?: (ids: number[]) => void;
   initialPriceInputs?: Record<number, string>;
   onPriceInputsChange?: (inputs: Record<number, string>) => void;
+  onItemPricePersist?: (id: number, price: number) => void;
   onResultsChange?: (results: ProfitabilityResult[]) => void;
   initialAcknowledgedResources?: string[];
   onAcknowledgedResourcesChange?: (keys: string[]) => void;
   initialAcknowledgedItemResources?: Record<number, string[]>;
   onAcknowledgedItemResourcesChange?: (map: Record<number, string[]>) => void;
+  onResourcePricePersist?: (id: number | undefined, price: number) => void;
 }
 
 type SortKey = "benefit" | "marginPercent" | "hdvPrice" | "costTotal" | "multiplier";
@@ -64,11 +66,13 @@ const ProfitabilityTable = ({
   onIncludedIdsChange,
   initialPriceInputs,
   onPriceInputsChange,
+  onItemPricePersist,
   onResultsChange,
   initialAcknowledgedResources,
   onAcknowledgedResourcesChange,
   initialAcknowledgedItemResources,
   onAcknowledgedItemResourcesChange,
+  onResourcePricePersist,
 }: ProfitabilityTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("marginPercent");
   const [sortDesc, setSortDesc] = useState(true);
@@ -198,6 +202,7 @@ const ProfitabilityTable = ({
     const nextInputs = { ...priceInputs, [id]: clean ? String(clean) : "" };
     setPriceInputs(nextInputs);
     onPriceInputsChange?.(nextInputs);
+    onItemPricePersist?.(id, clean);
     setEditableResults((prev) => {
       const next = prev.map((res) => {
         if (res.item.id !== id) return res;
@@ -214,6 +219,7 @@ const ProfitabilityTable = ({
   };
 
   const updateResourceUnitPrice = (resourceKey: string | null, resourceId: number | undefined, newPrice: number) => {
+    onResourcePricePersist?.(resourceId, newPrice);
     setEditableResults((prev) => {
       const next = prev.map((res) => {
         const resources = (res.resources ?? []).map((r) => {

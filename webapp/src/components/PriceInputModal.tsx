@@ -34,7 +34,7 @@ const PriceInputModal = ({
   const [step, setStep] = useState<"resources" | "hdv">("resources");
   const itemIds = useMemo(() => Array.from(new Set(selectedItems.map((item) => item.id))).filter(Boolean), [selectedItems]);
   const { recipes, isLoading: recipesLoading } = useRecipes(itemIds, dataset);
-  const { resourcePrices, itemPrices, setResourcePrices, setItemPrices, savePrices, resetPrices } = usePrices(server, dataset);
+  const { resourcePrices, itemPrices, updateResourcePrice, updateItemPrice, savePrices, resetPrices } = usePrices(server, dataset);
   const [lockedResources, setLockedResources] = useState<Record<number, boolean>>({});
   const [lockedItems, setLockedItems] = useState<Record<number, boolean>>({});
   const hasInitializedLocks = useRef(false);
@@ -121,13 +121,13 @@ const PriceInputModal = ({
   const handleResourcePriceChange = (id: number, value: string) => {
     if (isLockedResource(id)) return;
     const numValue = parseInt(value.replace(/\D/g, "")) || 0;
-    setResourcePrices((prev) => ({ ...prev, [id]: numValue }));
+    updateResourcePrice(id, numValue);
   };
 
   const handleHdvPriceChange = (id: number, value: string) => {
     if (isLockedItem(id)) return;
     const numValue = parseInt(value.replace(/\D/g, "")) || 0;
-    setItemPrices((prev) => ({ ...prev, [id]: numValue }));
+    updateItemPrice(id, numValue);
   };
 
   const formatKamas = (value: number) => {
@@ -347,9 +347,7 @@ const PriceInputModal = ({
                 variant="outline"
                 onClick={() => {
                   resetPrices();
-                  setResourcePrices({});
-                setItemPrices({});
-              }}
+                }}
               className="flex-1"
             >
               Réinitialiser les prix

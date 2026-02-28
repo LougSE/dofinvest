@@ -7,6 +7,7 @@ import ItemGrid from "@/components/ItemGrid";
 import SelectionPanel from "@/components/SelectionPanel";
 import PriceInputModal from "@/components/PriceInputModal";
 import ProfitabilityTable from "@/components/ProfitabilityTable";
+import { usePrices } from "@/hooks/usePrices";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Sparkles } from "lucide-react";
@@ -78,6 +79,7 @@ const Index = () => {
   const [ackItemResourcesState, setAckItemResourcesState] = useState<Record<number, string[]>>({});
   const [hasRestoredLastAnalysis, setHasRestoredLastAnalysis] = useState(false);
   const server = "Abrak";
+  const { updateItemPrice, updateResourcePrice } = usePrices(server, datasetVersion);
   const PAGE_SIZE = 60;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const loaderRef = useRef<HTMLDivElement | null>(null);
@@ -608,6 +610,9 @@ const Index = () => {
           setPriceInputsState(inputs);
           schedulePersist();
         }}
+        onItemPricePersist={(id, price) => {
+          updateItemPrice(id, price);
+        }}
         initialAcknowledgedResources={ackResourcesState}
         onAcknowledgedResourcesChange={(keys) => {
           setAckResourcesState(keys);
@@ -617,6 +622,10 @@ const Index = () => {
         onAcknowledgedItemResourcesChange={(map) => {
           setAckItemResourcesState(map);
           schedulePersist();
+        }}
+        onResourcePricePersist={(id, price) => {
+          if (id === undefined) return;
+          updateResourcePrice(id, price);
         }}
         onResultsChange={(next) => {
           setResults(next);

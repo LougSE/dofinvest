@@ -1,0 +1,2887 @@
+{
+  "bourgeon d'abraknyde": {
+    "canonicalId": "437",
+    "aliasIds": [
+      "437",
+      "2442582254"
+    ]
+  },
+  "feuille de tronknyde": {
+    "canonicalId": "2249",
+    "aliasIds": [
+      "2249",
+      "1433351986"
+    ]
+  },
+  "ecorce d'abraknyde": {
+    "canonicalId": "434",
+    "aliasIds": [
+      "434",
+      "473824952"
+    ]
+  },
+  "bois de tronknyde": {
+    "canonicalId": "2250",
+    "aliasIds": [
+      "2250",
+      "878383876"
+    ]
+  },
+  "racine d'abraknyde": {
+    "canonicalId": "435",
+    "aliasIds": [
+      "435",
+      "3075295453"
+    ]
+  },
+  "ambre": {
+    "canonicalId": "463",
+    "aliasIds": [
+      "463",
+      "549415666"
+    ]
+  },
+  "sève d'abraknyde": {
+    "canonicalId": "792",
+    "aliasIds": [
+      "792",
+      "175844819"
+    ]
+  },
+  "bois de bambou sombre": {
+    "canonicalId": "7016",
+    "aliasIds": [
+      "7016",
+      "182050274"
+    ]
+  },
+  "ambre ancestrale": {
+    "canonicalId": "918",
+    "aliasIds": [
+      "918",
+      "2980554374"
+    ]
+  },
+  "bourgeon d'abraknyde sombre": {
+    "canonicalId": "1611",
+    "aliasIds": [
+      "1611",
+      "376699953"
+    ]
+  },
+  "racine d'abraknyde sombre": {
+    "canonicalId": "1612",
+    "aliasIds": [
+      "1612",
+      "2974756746"
+    ]
+  },
+  "ambre d'abraknyde": {
+    "canonicalId": "464",
+    "aliasIds": [
+      "464",
+      "3350905042"
+    ]
+  },
+  "eau": {
+    "canonicalId": "311",
+    "aliasIds": [
+      "311",
+      "1833468792"
+    ]
+  },
+  "ambre d'abraknyde sombre": {
+    "canonicalId": "1660",
+    "aliasIds": [
+      "1660",
+      "920358346",
+      "3028120691"
+    ]
+  },
+  "ecorce d'abraknyde sombre": {
+    "canonicalId": "1610",
+    "aliasIds": [
+      "1610",
+      "396633563"
+    ]
+  },
+  "bois de bombu": {
+    "canonicalId": "2358",
+    "aliasIds": [
+      "2358",
+      "1577240342"
+    ]
+  },
+  "bois d'orme": {
+    "canonicalId": "470",
+    "aliasIds": [
+      "470",
+      "2176696140",
+      "3233431779"
+    ]
+  },
+  "saphir": {
+    "canonicalId": "466",
+    "aliasIds": [
+      "466",
+      "926419504",
+      "3032703491"
+    ]
+  },
+  "bois ancestral": {
+    "canonicalId": "920",
+    "aliasIds": [
+      "920",
+      "3091057398"
+    ]
+  },
+  "bois d'if": {
+    "canonicalId": "461",
+    "aliasIds": [
+      "461",
+      "3356444034"
+    ]
+  },
+  "bois d'erable": {
+    "canonicalId": "471",
+    "aliasIds": [
+      "471",
+      "3634070254"
+    ]
+  },
+  "bronze": {
+    "canonicalId": "442",
+    "aliasIds": [
+      "442",
+      "2698998359"
+    ]
+  },
+  "kobalte": {
+    "canonicalId": "443",
+    "aliasIds": [
+      "443",
+      "3168101257"
+    ]
+  },
+  "bois de châtaignier": {
+    "canonicalId": "473",
+    "aliasIds": [
+      "473",
+      "2643460226"
+    ]
+  },
+  "bois de frêne": {
+    "canonicalId": "303",
+    "aliasIds": [
+      "303",
+      "1615180880"
+    ]
+  },
+  "cuivre": {
+    "canonicalId": "441",
+    "aliasIds": [
+      "441",
+      "2869909979"
+    ]
+  },
+  "bois de chêne": {
+    "canonicalId": "460",
+    "aliasIds": [
+      "460",
+      "3576946596"
+    ]
+  },
+  "ficelle en lin": {
+    "canonicalId": "420",
+    "aliasIds": [
+      "420",
+      "3970812408"
+    ]
+  },
+  "planche en frêne": {
+    "canonicalId": "459",
+    "aliasIds": [
+      "459",
+      "3058977235"
+    ]
+  },
+  "duvet du kilibriss": {
+    "canonicalId": "8756",
+    "aliasIds": [
+      "8756",
+      "1443876188"
+    ]
+  },
+  "etoffe de ouassingue": {
+    "canonicalId": "8801",
+    "aliasIds": [
+      "8801",
+      "2834712864"
+    ]
+  },
+  "artefact pandawushu air": {
+    "canonicalId": "7223",
+    "aliasIds": [
+      "7223",
+      "1227207893"
+    ]
+  },
+  "aluminite": {
+    "canonicalId": "747",
+    "aliasIds": [
+      "747",
+      "982885713"
+    ]
+  },
+  "pyrute": {
+    "canonicalId": "7035",
+    "aliasIds": [
+      "7035",
+      "4105532861"
+    ]
+  },
+  "agathe": {
+    "canonicalId": "7028",
+    "aliasIds": [
+      "7028",
+      "4284644583"
+    ]
+  },
+  "bois de bambou": {
+    "canonicalId": "7013",
+    "aliasIds": [
+      "7013",
+      "4261550962"
+    ]
+  },
+  "argent": {
+    "canonicalId": "350",
+    "aliasIds": [
+      "350",
+      "1272947732"
+    ]
+  },
+  "artefact pandawushu eau": {
+    "canonicalId": "7222",
+    "aliasIds": [
+      "7222",
+      "612669674"
+    ]
+  },
+  "or": {
+    "canonicalId": "313",
+    "aliasIds": [
+      "313",
+      "976052200"
+    ]
+  },
+  "epine d'ougah": {
+    "canonicalId": "9280",
+    "aliasIds": [
+      "9280",
+      "3106484719"
+    ]
+  },
+  "langue du champodonte": {
+    "canonicalId": "9269",
+    "aliasIds": [
+      "9269",
+      "2521599052"
+    ]
+  },
+  "tourbe séchée de tourbassingue": {
+    "canonicalId": "8810",
+    "aliasIds": [
+      "8810",
+      "1310643279"
+    ]
+  },
+  "amygdales du bitouf sombre": {
+    "canonicalId": "8783",
+    "aliasIds": [
+      "8783",
+      "1392624721"
+    ]
+  },
+  "ecorce de champaknyde": {
+    "canonicalId": "9263",
+    "aliasIds": [
+      "9263",
+      "736615037"
+    ]
+  },
+  "chanvre euphorique": {
+    "canonicalId": "2035",
+    "aliasIds": [
+      "2035",
+      "1677923"
+    ]
+  },
+  "graine de l'abrakleur sombre": {
+    "canonicalId": "8785",
+    "aliasIds": [
+      "8785",
+      "2345982949"
+    ]
+  },
+  "talon d'achille de l'abrakleur sombre": {
+    "canonicalId": "8784",
+    "aliasIds": [
+      "8784",
+      "4210159016"
+    ]
+  },
+  "rutile": {
+    "canonicalId": "7036",
+    "aliasIds": [
+      "7036",
+      "1253969986"
+    ]
+  },
+  "kriptonite": {
+    "canonicalId": "6457",
+    "aliasIds": [
+      "6457",
+      "2569350751"
+    ]
+  },
+  "ecorce magique de bulbig": {
+    "canonicalId": "7269",
+    "aliasIds": [
+      "7269",
+      "3166576042"
+    ]
+  },
+  "aigue-marine": {
+    "canonicalId": "7026",
+    "aliasIds": [
+      "7026",
+      "368009605"
+    ]
+  },
+  "topaze": {
+    "canonicalId": "7027",
+    "aliasIds": [
+      "7027",
+      "31094811"
+    ]
+  },
+  "bois de bambou doré": {
+    "canonicalId": "7017",
+    "aliasIds": [
+      "7017",
+      "2510876977"
+    ]
+  },
+  "sacrum magistral": {
+    "canonicalId": "8738",
+    "aliasIds": [
+      "8738",
+      "477885288"
+    ]
+  },
+  "silicate": {
+    "canonicalId": "7032",
+    "aliasIds": [
+      "7032",
+      "410164928"
+    ]
+  },
+  "dolomite": {
+    "canonicalId": "7033",
+    "aliasIds": [
+      "7033",
+      "963004056"
+    ]
+  },
+  "kobalite": {
+    "canonicalId": "6458",
+    "aliasIds": [
+      "6458",
+      "2868232947",
+      "3892823437"
+    ]
+  },
+  "bakélélite": {
+    "canonicalId": "749",
+    "aliasIds": [
+      "749",
+      "2785112608"
+    ]
+  },
+  "rubis": {
+    "canonicalId": "467",
+    "aliasIds": [
+      "467",
+      "844531710",
+      "3123165159"
+    ]
+  },
+  "emeraude": {
+    "canonicalId": "316",
+    "aliasIds": [
+      "316",
+      "2883279693",
+      "4169533010"
+    ]
+  },
+  "diamant": {
+    "canonicalId": "315",
+    "aliasIds": [
+      "315",
+      "1369357173",
+      "3788731485"
+    ]
+  },
+  "manganèse": {
+    "canonicalId": "445",
+    "aliasIds": [
+      "445",
+      "3418594731"
+    ]
+  },
+  "etain": {
+    "canonicalId": "444",
+    "aliasIds": [
+      "444",
+      "1218452130"
+    ]
+  },
+  "champignon": {
+    "canonicalId": "290",
+    "aliasIds": [
+      "290",
+      "274600936"
+    ]
+  },
+  "dent de serpentin": {
+    "canonicalId": "2509",
+    "aliasIds": [
+      "2509",
+      "3321082432"
+    ]
+  },
+  "ambre de bambouto": {
+    "canonicalId": "7369",
+    "aliasIds": [
+      "7369",
+      "1335345757"
+    ]
+  },
+  "bois d'ebène": {
+    "canonicalId": "449",
+    "aliasIds": [
+      "449",
+      "2827861683"
+    ]
+  },
+  "kouartz": {
+    "canonicalId": "750",
+    "aliasIds": [
+      "750",
+      "2153875876"
+    ]
+  },
+  "bois de merisier": {
+    "canonicalId": "474",
+    "aliasIds": [
+      "474",
+      "3629548723"
+    ]
+  },
+  "sourcils de tronknyde": {
+    "canonicalId": "2564",
+    "aliasIds": [
+      "2564",
+      "875009320"
+    ]
+  },
+  "fleur de gloutoblop": {
+    "canonicalId": "9381",
+    "aliasIds": [
+      "9381",
+      "437899319"
+    ]
+  },
+  "racine de tronkoblop": {
+    "canonicalId": "9383",
+    "aliasIds": [
+      "9383",
+      "1241025400"
+    ]
+  },
+  "feuille de blop multicolore royal": {
+    "canonicalId": "9389",
+    "aliasIds": [
+      "9389",
+      "4213173707"
+    ]
+  },
+  "moustache du mufafah": {
+    "canonicalId": "8763",
+    "aliasIds": [
+      "8763",
+      "2389122997"
+    ]
+  },
+  "plume de fesse du kido": {
+    "canonicalId": "8766",
+    "aliasIds": [
+      "8766",
+      "723405992"
+    ]
+  },
+  "bauxite": {
+    "canonicalId": "446",
+    "aliasIds": [
+      "446",
+      "4121442918"
+    ]
+  },
+  "dent de wabbit": {
+    "canonicalId": "305",
+    "aliasIds": [
+      "305",
+      "4206473037"
+    ]
+  },
+  "patte de wabbit": {
+    "canonicalId": "2288",
+    "aliasIds": [
+      "2288",
+      "2696111415"
+    ]
+  },
+  "bandeau du black tiwabbit": {
+    "canonicalId": "372",
+    "aliasIds": [
+      "372",
+      "1335860684"
+    ]
+  },
+  "cawotte": {
+    "canonicalId": "361",
+    "aliasIds": [
+      "361",
+      "1441655941"
+    ]
+  },
+  "etoffe du wabbit": {
+    "canonicalId": "654",
+    "aliasIds": [
+      "654",
+      "3423280019"
+    ]
+  },
+  "poils de barbe du grand pa wabbit": {
+    "canonicalId": "418",
+    "aliasIds": [
+      "418",
+      "509342609"
+    ]
+  },
+  "racine de bulbiflore": {
+    "canonicalId": "7262",
+    "aliasIds": [
+      "7262",
+      "51638960"
+    ]
+  },
+  "racine de bulbuisson": {
+    "canonicalId": "7263",
+    "aliasIds": [
+      "7263",
+      "138209349"
+    ]
+  },
+  "bois de charme": {
+    "canonicalId": "472",
+    "aliasIds": [
+      "472",
+      "29098475",
+      "896912433"
+    ]
+  },
+  "cristal": {
+    "canonicalId": "465",
+    "aliasIds": [
+      "465",
+      "764585614"
+    ]
+  },
+  "bois d'oliviolet": {
+    "canonicalId": "2357",
+    "aliasIds": [
+      "2357",
+      "1071668535"
+    ]
+  },
+  "bois de noyer": {
+    "canonicalId": "476",
+    "aliasIds": [
+      "476",
+      "2378395240"
+    ]
+  },
+  "puissante amulette de l'ours": {
+    "canonicalId": "77",
+    "aliasIds": [
+      "77",
+      "426221874"
+    ]
+  },
+  "puissante amulette du hibou": {
+    "canonicalId": "70",
+    "aliasIds": [
+      "70",
+      "1867145853"
+    ]
+  },
+  "oeil de kwoan": {
+    "canonicalId": "2283",
+    "aliasIds": [
+      "2283",
+      "1387690686"
+    ]
+  },
+  "oeil de champmane": {
+    "canonicalId": "9277",
+    "aliasIds": [
+      "9277",
+      "246742821"
+    ]
+  },
+  "lin tempête": {
+    "canonicalId": "2026",
+    "aliasIds": [
+      "2026",
+      "3787196327"
+    ]
+  },
+  "chaussette du kimbo": {
+    "canonicalId": "8789",
+    "aliasIds": [
+      "8789",
+      "2256169295"
+    ]
+  },
+  "pierre du craqueleur": {
+    "canonicalId": "431",
+    "aliasIds": [
+      "431",
+      "1918889030"
+    ]
+  },
+  "queue de scorbute": {
+    "canonicalId": "1893",
+    "aliasIds": [
+      "1893",
+      "2836361520"
+    ]
+  },
+  "crâne de chafer": {
+    "canonicalId": "2336",
+    "aliasIds": [
+      "2336",
+      "2173727908"
+    ]
+  },
+  "pétale de rose démoniaque": {
+    "canonicalId": "309",
+    "aliasIds": [
+      "309",
+      "421102327"
+    ]
+  },
+  "corne de bouftou": {
+    "canonicalId": "383",
+    "aliasIds": [
+      "383",
+      "200623638"
+    ]
+  },
+  "cuir de boufton blanc": {
+    "canonicalId": "883",
+    "aliasIds": [
+      "883",
+      "1605166844"
+    ]
+  },
+  "laine de bouftou": {
+    "canonicalId": "384",
+    "aliasIds": [
+      "384",
+      "3482437396"
+    ]
+  },
+  "os de chafer": {
+    "canonicalId": "310",
+    "aliasIds": [
+      "310",
+      "1993827002"
+    ]
+  },
+  "ecaille de crocodaille": {
+    "canonicalId": "1663",
+    "aliasIds": [
+      "1663",
+      "1341789306"
+    ]
+  },
+  "pierre de saphir": {
+    "canonicalId": "546",
+    "aliasIds": [
+      "546",
+      "2765445712"
+    ]
+  },
+  "dent en or du craqueleur": {
+    "canonicalId": "2252",
+    "aliasIds": [
+      "2252",
+      "3966029467"
+    ]
+  },
+  "ecaille de dragoss blanc": {
+    "canonicalId": "8354",
+    "aliasIds": [
+      "8354",
+      "1005080198"
+    ]
+  },
+  "ecaille de dragoss doré": {
+    "canonicalId": "8355",
+    "aliasIds": [
+      "8355",
+      "2461239500"
+    ]
+  },
+  "ecaille de dragoss noir": {
+    "canonicalId": "8352",
+    "aliasIds": [
+      "8352",
+      "362360251"
+    ]
+  },
+  "ecaille de dragoss de saphire": {
+    "canonicalId": "8353",
+    "aliasIds": [
+      "8353",
+      "2929050909"
+    ]
+  },
+  "peau de kitsou nakwa": {
+    "canonicalId": "7282",
+    "aliasIds": [
+      "7282",
+      "3666471001"
+    ]
+  },
+  "peau de kitsou nae": {
+    "canonicalId": "7279",
+    "aliasIds": [
+      "7279",
+      "3759651832"
+    ]
+  },
+  "peau de kitsou nere": {
+    "canonicalId": "7281",
+    "aliasIds": [
+      "7281",
+      "735409661"
+    ]
+  },
+  "os de pékeualak": {
+    "canonicalId": "8083",
+    "aliasIds": [
+      "8083",
+      "3672982797"
+    ]
+  },
+  "poils de koalak koko": {
+    "canonicalId": "8060",
+    "aliasIds": [
+      "8060",
+      "964919802"
+    ]
+  },
+  "ebonite": {
+    "canonicalId": "746",
+    "aliasIds": [
+      "746",
+      "3453806196"
+    ]
+  },
+  "magnésite": {
+    "canonicalId": "748",
+    "aliasIds": [
+      "748",
+      "1930843021"
+    ]
+  },
+  "poudre de perlinpainpain": {
+    "canonicalId": "519",
+    "aliasIds": [
+      "519",
+      "3098251921"
+    ]
+  },
+  "graine de sésame": {
+    "canonicalId": "287",
+    "aliasIds": [
+      "287",
+      "4104819325"
+    ]
+  },
+  "plume de piou jaune": {
+    "canonicalId": "6902",
+    "aliasIds": [
+      "6902",
+      "519937628"
+    ]
+  },
+  "teinture magique sombre": {
+    "canonicalId": "269744909",
+    "aliasIds": [
+      "-5514770346952797000",
+      "269744909"
+    ]
+  },
+  "feuille de fourbasse": {
+    "canonicalId": "2254",
+    "aliasIds": [
+      "2254",
+      "2588811637"
+    ]
+  },
+  "fleur de gloutovore": {
+    "canonicalId": "2253",
+    "aliasIds": [
+      "2253",
+      "4241313611"
+    ]
+  },
+  "ivoire": {
+    "canonicalId": "479",
+    "aliasIds": [
+      "479",
+      "2939364294"
+    ]
+  },
+  "bois envoûté": {
+    "canonicalId": "926",
+    "aliasIds": [
+      "926",
+      "3620436060"
+    ]
+  },
+  "plumes de tofu": {
+    "canonicalId": "301",
+    "aliasIds": [
+      "301",
+      "2641802338"
+    ]
+  },
+  "oeuf de tofu": {
+    "canonicalId": "367",
+    "aliasIds": [
+      "367",
+      "3627445950"
+    ]
+  },
+  "bec du tofu": {
+    "canonicalId": "366",
+    "aliasIds": [
+      "366",
+      "2380890020"
+    ]
+  },
+  "plume du batofu": {
+    "canonicalId": "8557",
+    "aliasIds": [
+      "8557",
+      "3190413641"
+    ]
+  },
+  "ecorce magique de bulbiflore": {
+    "canonicalId": "7270",
+    "aliasIds": [
+      "7270",
+      "56303267"
+    ]
+  },
+  "fer": {
+    "canonicalId": "312",
+    "aliasIds": [
+      "312",
+      "2798708940"
+    ]
+  },
+  "peau du rasboul majeur": {
+    "canonicalId": "8996",
+    "aliasIds": [
+      "8996",
+      "2275470483"
+    ]
+  },
+  "ecorce de nerbe": {
+    "canonicalId": "8773",
+    "aliasIds": [
+      "8773",
+      "2742048915"
+    ]
+  },
+  "croupion du bitouf aérien": {
+    "canonicalId": "8788",
+    "aliasIds": [
+      "8788",
+      "3454446755"
+    ]
+  },
+  "ecusson du sergent zoth": {
+    "canonicalId": "8806",
+    "aliasIds": [
+      "8806",
+      "99866566"
+    ]
+  },
+  "ambre du tynril": {
+    "canonicalId": "8916",
+    "aliasIds": [
+      "8916",
+      "1896387480"
+    ]
+  },
+  "peau de bworker": {
+    "canonicalId": "9401",
+    "aliasIds": [
+      "9401",
+      "191920673"
+    ]
+  },
+  "dent de chef de guerre bouftou": {
+    "canonicalId": "2463",
+    "aliasIds": [
+      "2463",
+      "1119493572"
+    ]
+  },
+  "corne de chef de guerre bouftou": {
+    "canonicalId": "2465",
+    "aliasIds": [
+      "2465",
+      "1870480915"
+    ]
+  },
+  "oeil de boufton": {
+    "canonicalId": "2460",
+    "aliasIds": [
+      "2460",
+      "3496844298"
+    ]
+  },
+  "oeil de bouftou": {
+    "canonicalId": "2453",
+    "aliasIds": [
+      "2453",
+      "2915458212"
+    ]
+  },
+  "ailes du scarabosse doré": {
+    "canonicalId": "8161",
+    "aliasIds": [
+      "8161",
+      "3259734332"
+    ]
+  },
+  "ecorce magique de bulbambou": {
+    "canonicalId": "7272",
+    "aliasIds": [
+      "7272",
+      "3774288900"
+    ]
+  },
+  "griffe du mulou": {
+    "canonicalId": "440",
+    "aliasIds": [
+      "440",
+      "4149790991"
+    ]
+  },
+  "canine du mulou": {
+    "canonicalId": "439",
+    "aliasIds": [
+      "439",
+      "3621563876"
+    ]
+  },
+  "clakoss": {
+    "canonicalId": "2527",
+    "aliasIds": [
+      "2527",
+      "3351972193"
+    ]
+  },
+  "trompe de la tromperelle": {
+    "canonicalId": "9267",
+    "aliasIds": [
+      "9267",
+      "3983113086"
+    ]
+  },
+  "faux menton du bourbassingue": {
+    "canonicalId": "8811",
+    "aliasIds": [
+      "8811",
+      "40010622"
+    ]
+  },
+  "rembourrage de meupette": {
+    "canonicalId": "8790",
+    "aliasIds": [
+      "8790",
+      "731839610"
+    ]
+  },
+  "tibia du guerrier zoth": {
+    "canonicalId": "8802",
+    "aliasIds": [
+      "8802",
+      "1962641192"
+    ]
+  },
+  "bâton du kilibriss": {
+    "canonicalId": "8765",
+    "aliasIds": [
+      "8765",
+      "1376074151"
+    ]
+  },
+  "etoffe du wa wabbit": {
+    "canonicalId": "8398",
+    "aliasIds": [
+      "8398",
+      "1738343288"
+    ]
+  },
+  "bave de bouftou": {
+    "canonicalId": "385",
+    "aliasIds": [
+      "385",
+      "222151319"
+    ]
+  },
+  "noeud de l'abrakleur clair": {
+    "canonicalId": "8796",
+    "aliasIds": [
+      "8796",
+      "1489097310"
+    ]
+  },
+  "coco du bitouf aérien": {
+    "canonicalId": "8792",
+    "aliasIds": [
+      "8792",
+      "3198654220"
+    ]
+  },
+  "ecorce de floribonde": {
+    "canonicalId": "8771",
+    "aliasIds": [
+      "8771",
+      "49561457"
+    ]
+  },
+  "etoffe de meupette": {
+    "canonicalId": "8791",
+    "aliasIds": [
+      "8791",
+      "2051351801"
+    ]
+  },
+  "bracelet de force de trool": {
+    "canonicalId": "2561",
+    "aliasIds": [
+      "2561",
+      "1373945551"
+    ]
+  },
+  "racine de bulbambou": {
+    "canonicalId": "7264",
+    "aliasIds": [
+      "7264",
+      "2957074536"
+    ]
+  },
+  "tige de pissenlit diabolique": {
+    "canonicalId": "373",
+    "aliasIds": [
+      "373",
+      "2909124945"
+    ]
+  },
+  "bave de champ à gnons": {
+    "canonicalId": "9279",
+    "aliasIds": [
+      "9279",
+      "2188291815"
+    ]
+  },
+  "ecorce du tynril": {
+    "canonicalId": "8770",
+    "aliasIds": [
+      "8770",
+      "2603982715"
+    ]
+  },
+  "braguette du maître zoth": {
+    "canonicalId": "8804",
+    "aliasIds": [
+      "8804",
+      "4073511376"
+    ]
+  },
+  "rotule du disciple zoth": {
+    "canonicalId": "8803",
+    "aliasIds": [
+      "8803",
+      "3465584793"
+    ]
+  },
+  "champignon luidegît": {
+    "canonicalId": "1674",
+    "aliasIds": [
+      "1674",
+      "979210436"
+    ]
+  },
+  "lamelle de champbis": {
+    "canonicalId": "9278",
+    "aliasIds": [
+      "9278",
+      "3482869908"
+    ]
+  },
+  "tresse du poolay": {
+    "canonicalId": "8786",
+    "aliasIds": [
+      "8786",
+      "3745897675"
+    ]
+  },
+  "cubitus du rat noir": {
+    "canonicalId": "8488",
+    "aliasIds": [
+      "8488",
+      "2869302627"
+    ]
+  },
+  "epine du champ champ": {
+    "canonicalId": "377",
+    "aliasIds": [
+      "377",
+      "2477775756"
+    ]
+  },
+  "ambre du chêne mou": {
+    "canonicalId": "6490",
+    "aliasIds": [
+      "6490",
+      "1088239854"
+    ]
+  },
+  "coquille de dragoss blanc": {
+    "canonicalId": "8350",
+    "aliasIds": [
+      "8350",
+      "1001222152"
+    ]
+  },
+  "coquille de dragoss doré": {
+    "canonicalId": "8351",
+    "aliasIds": [
+      "8351",
+      "604520225"
+    ]
+  },
+  "coquille de dragoss noir": {
+    "canonicalId": "8348",
+    "aliasIds": [
+      "8348",
+      "3069800947"
+    ]
+  },
+  "coquille de dragoss de saphir": {
+    "canonicalId": "8349",
+    "aliasIds": [
+      "8349",
+      "1537902832"
+    ]
+  },
+  "corne de dragueuse": {
+    "canonicalId": "8357",
+    "aliasIds": [
+      "8357",
+      "1780721451"
+    ]
+  },
+  "corne de dragoeuf volant": {
+    "canonicalId": "8361",
+    "aliasIds": [
+      "8361",
+      "111135563"
+    ]
+  },
+  "défense de dragon cochon": {
+    "canonicalId": "2643",
+    "aliasIds": [
+      "2643",
+      "1853901376"
+    ]
+  },
+  "cubitus de momie koalak": {
+    "canonicalId": "8058",
+    "aliasIds": [
+      "8058",
+      "3985513508"
+    ]
+  },
+  "poils du meulou": {
+    "canonicalId": "1691",
+    "aliasIds": [
+      "1691",
+      "2470238090"
+    ]
+  },
+  "fémur de koalak farouche": {
+    "canonicalId": "8056",
+    "aliasIds": [
+      "8056",
+      "1033061933"
+    ]
+  },
+  "queue du mulou": {
+    "canonicalId": "438",
+    "aliasIds": [
+      "438",
+      "3409118949"
+    ]
+  },
+  "poils du mulou": {
+    "canonicalId": "291",
+    "aliasIds": [
+      "291",
+      "2505915917"
+    ]
+  },
+  "crinière de prespic": {
+    "canonicalId": "2574",
+    "aliasIds": [
+      "2574",
+      "1205375800"
+    ]
+  },
+  "pic du prespic": {
+    "canonicalId": "407",
+    "aliasIds": [
+      "407",
+      "2107833619"
+    ]
+  },
+  "queue de prespic": {
+    "canonicalId": "2573",
+    "aliasIds": [
+      "2573",
+      "1340118955"
+    ]
+  },
+  "défense du sanglier": {
+    "canonicalId": "387",
+    "aliasIds": [
+      "387",
+      "2446127526"
+    ]
+  },
+  "poils du sanglier": {
+    "canonicalId": "388",
+    "aliasIds": [
+      "388",
+      "3665957694"
+    ]
+  },
+  "crocs de rats": {
+    "canonicalId": "2322",
+    "aliasIds": [
+      "2322",
+      "4268992340"
+    ]
+  },
+  "petite perle dorée": {
+    "canonicalId": "2328",
+    "aliasIds": [
+      "2328",
+      "3957920260"
+    ]
+  },
+  "fragment de cerveau poli": {
+    "canonicalId": "8762",
+    "aliasIds": [
+      "8762",
+      "2683434227"
+    ]
+  },
+  "coco du bitouf des plaines": {
+    "canonicalId": "8769",
+    "aliasIds": [
+      "8769",
+      "530910045"
+    ]
+  },
+  "barbe inexistante du barbroussa": {
+    "canonicalId": "8754",
+    "aliasIds": [
+      "8754",
+      "4040411068"
+    ]
+  },
+  "humérus du sparo": {
+    "canonicalId": "8739",
+    "aliasIds": [
+      "8739",
+      "307492492"
+    ]
+  },
+  "bave du kaskargo": {
+    "canonicalId": "8832",
+    "aliasIds": [
+      "8832",
+      "1154374694"
+    ]
+  },
+  "peau de raul mops": {
+    "canonicalId": "8681",
+    "aliasIds": [
+      "8681",
+      "1405171660"
+    ]
+  },
+  "sourcil du rasboul majeur": {
+    "canonicalId": "8764",
+    "aliasIds": [
+      "8764",
+      "1344878940"
+    ]
+  },
+  "coquille de dragoeuf saphir": {
+    "canonicalId": "1129",
+    "aliasIds": [
+      "1129",
+      "1450856118"
+    ]
+  },
+  "bois de bambouto": {
+    "canonicalId": "7286",
+    "aliasIds": [
+      "7286",
+      "361860107"
+    ]
+  },
+  "jus de ouassingue": {
+    "canonicalId": "8807",
+    "aliasIds": [
+      "8807",
+      "1022963167"
+    ]
+  },
+  "cale en bois du tronknyde": {
+    "canonicalId": "2563",
+    "aliasIds": [
+      "2563",
+      "3202362887"
+    ]
+  },
+  "queue de dragodinde": {
+    "canonicalId": "2594",
+    "aliasIds": [
+      "2594",
+      "361124526"
+    ]
+  },
+  "tranche de tronknyde": {
+    "canonicalId": "2565",
+    "aliasIds": [
+      "2565",
+      "2550939455"
+    ]
+  },
+  "racine de bulbig": {
+    "canonicalId": "7265",
+    "aliasIds": [
+      "7265",
+      "2436322425"
+    ]
+  },
+  "tronc de kokoko": {
+    "canonicalId": "1002",
+    "aliasIds": [
+      "1002",
+      "592929852"
+    ]
+  },
+  "tranche magique de tronknyde": {
+    "canonicalId": "2566",
+    "aliasIds": [
+      "2566",
+      "1994385963"
+    ]
+  },
+  "bois de kaliptus": {
+    "canonicalId": "7925",
+    "aliasIds": [
+      "7925",
+      "2819897593"
+    ]
+  },
+  "corne de dragoeuf guerrier": {
+    "canonicalId": "8363",
+    "aliasIds": [
+      "8363",
+      "1035173601"
+    ]
+  },
+  "main de boo": {
+    "canonicalId": "2584",
+    "aliasIds": [
+      "2584",
+      "3827000283"
+    ]
+  },
+  "oeuf de dragoeuf blanc": {
+    "canonicalId": "847",
+    "aliasIds": [
+      "847",
+      "739638687"
+    ]
+  },
+  "pointe de flèche du bwork archer": {
+    "canonicalId": "429",
+    "aliasIds": [
+      "429",
+      "1962969512"
+    ]
+  },
+  "corne de dragoss de saphire": {
+    "canonicalId": "8345",
+    "aliasIds": [
+      "8345",
+      "2606861719"
+    ]
+  },
+  "os de fantôme pandikaze": {
+    "canonicalId": "7405",
+    "aliasIds": [
+      "7405",
+      "3342514313"
+    ]
+  },
+  "peau de piralak": {
+    "canonicalId": "8084",
+    "aliasIds": [
+      "8084",
+      "2960608452"
+    ]
+  },
+  "os de fantôme soryo firefoux": {
+    "canonicalId": "7408",
+    "aliasIds": [
+      "7408",
+      "303467936"
+    ]
+  },
+  "bois de bambou sacré": {
+    "canonicalId": "7014",
+    "aliasIds": [
+      "7014",
+      "77924675"
+    ]
+  },
+  "ecorce magique de bulbuisson": {
+    "canonicalId": "7271",
+    "aliasIds": [
+      "7271",
+      "651375644"
+    ]
+  },
+  "os de fantôme pandore": {
+    "canonicalId": "7406",
+    "aliasIds": [
+      "7406",
+      "3913190385"
+    ]
+  },
+  "bois de bambou magique": {
+    "canonicalId": "7261",
+    "aliasIds": [
+      "7261",
+      "436869563"
+    ]
+  },
+  "bois de bambouto sacré": {
+    "canonicalId": "7289",
+    "aliasIds": [
+      "7289",
+      "1816828442"
+    ]
+  },
+  "ambre de bambouto sacré": {
+    "canonicalId": "7370",
+    "aliasIds": [
+      "7370",
+      "614208409"
+    ]
+  },
+  "pierre précieuse du kimbo": {
+    "canonicalId": "8998",
+    "aliasIds": [
+      "8998",
+      "312783951"
+    ]
+  },
+  "potion d'incendie": {
+    "canonicalId": "1345",
+    "aliasIds": [
+      "1345",
+      "1042266282"
+    ]
+  },
+  "racine magique de bambouto": {
+    "canonicalId": "7290",
+    "aliasIds": [
+      "7290",
+      "3276841351"
+    ]
+  },
+  "perruque du kimbo": {
+    "canonicalId": "8795",
+    "aliasIds": [
+      "8795",
+      "720542487"
+    ]
+  },
+  "rhum de qualité": {
+    "canonicalId": "2620",
+    "aliasIds": [
+      "2620",
+      "4047573199"
+    ]
+  },
+  "fil de soie": {
+    "canonicalId": "643",
+    "aliasIds": [
+      "643",
+      "3999361253"
+    ]
+  },
+  "carpelle de brouture": {
+    "canonicalId": "8779",
+    "aliasIds": [
+      "8779",
+      "2273184836"
+    ]
+  },
+  "fémur du minotot": {
+    "canonicalId": "8410",
+    "aliasIds": [
+      "8410",
+      "2929836355"
+    ]
+  },
+  "chicot du flib": {
+    "canonicalId": "8740",
+    "aliasIds": [
+      "8740",
+      "94960802"
+    ]
+  },
+  "peau de mob l'eponge": {
+    "canonicalId": "8682",
+    "aliasIds": [
+      "8682",
+      "1383905993"
+    ]
+  },
+  "corail magistral": {
+    "canonicalId": "8731",
+    "aliasIds": [
+      "8731",
+      "270678057"
+    ]
+  },
+  "kole": {
+    "canonicalId": "1018",
+    "aliasIds": [
+      "1018",
+      "1300344658"
+    ]
+  },
+  "metaria mage rouge": {
+    "canonicalId": "1535",
+    "aliasIds": [
+      "1535",
+      "2135369118"
+    ]
+  },
+  "sang du vampire": {
+    "canonicalId": "752",
+    "aliasIds": [
+      "752",
+      "2659897269"
+    ]
+  },
+  "plume du kwak de glace": {
+    "canonicalId": "414",
+    "aliasIds": [
+      "414",
+      "4253455082"
+    ]
+  },
+  "sel": {
+    "canonicalId": "284",
+    "aliasIds": [
+      "284",
+      "4066206816"
+    ]
+  },
+  "ecorce de fécorce": {
+    "canonicalId": "8774",
+    "aliasIds": [
+      "8774",
+      "1264427673"
+    ]
+  },
+  "corne de dragoss doré": {
+    "canonicalId": "8347",
+    "aliasIds": [
+      "8347",
+      "3047362827"
+    ]
+  },
+  "bourgeon du chêne mou": {
+    "canonicalId": "6487",
+    "aliasIds": [
+      "6487",
+      "1502147200"
+    ]
+  },
+  "corne de déminoboule": {
+    "canonicalId": "8327",
+    "aliasIds": [
+      "8327",
+      "580778696"
+    ]
+  },
+  "carapace de scarafeuille blanc": {
+    "canonicalId": "2290",
+    "aliasIds": [
+      "2290",
+      "890911742"
+    ]
+  },
+  "carapace de scarafeuille bleu": {
+    "canonicalId": "2291",
+    "aliasIds": [
+      "2291",
+      "1818989365"
+    ]
+  },
+  "carapace de scarafeuille rouge": {
+    "canonicalId": "2292",
+    "aliasIds": [
+      "2292",
+      "928233693"
+    ]
+  },
+  "carapace de scarafeuille vert": {
+    "canonicalId": "2293",
+    "aliasIds": [
+      "2293",
+      "3120189306"
+    ]
+  },
+  "antennes du scarabosse doré": {
+    "canonicalId": "8160",
+    "aliasIds": [
+      "8160",
+      "934609624"
+    ]
+  },
+  "pince de scorbute": {
+    "canonicalId": "2245",
+    "aliasIds": [
+      "2245",
+      "701531923"
+    ]
+  },
+  "feuille de bambouto": {
+    "canonicalId": "7287",
+    "aliasIds": [
+      "7287",
+      "4182600938"
+    ]
+  },
+  "feuille de bambouto sacré": {
+    "canonicalId": "7288",
+    "aliasIds": [
+      "7288",
+      "2299812239"
+    ]
+  },
+  "grelot": {
+    "canonicalId": "2506",
+    "aliasIds": [
+      "2506",
+      "1202882862"
+    ]
+  },
+  "os de fantôme yokai firefoux": {
+    "canonicalId": "7411",
+    "aliasIds": [
+      "7411",
+      "1206148297"
+    ]
+  },
+  "ecorce de liroye merline": {
+    "canonicalId": "1682",
+    "aliasIds": [
+      "1682",
+      "1936148525"
+    ]
+  },
+  "os surprise du chafer fantassin": {
+    "canonicalId": "1675",
+    "aliasIds": [
+      "1675",
+      "2183943766"
+    ]
+  },
+  "tissu sanguin": {
+    "canonicalId": "2281",
+    "aliasIds": [
+      "2281",
+      "399362863"
+    ]
+  },
+  "peau de larve bleue": {
+    "canonicalId": "362",
+    "aliasIds": [
+      "362",
+      "2916506706"
+    ]
+  },
+  "peau de larve orange": {
+    "canonicalId": "363",
+    "aliasIds": [
+      "363",
+      "1556444029"
+    ]
+  },
+  "peau de larve verte": {
+    "canonicalId": "364",
+    "aliasIds": [
+      "364",
+      "2253426275"
+    ]
+  },
+  "amulette du hibou": {
+    "canonicalId": "68",
+    "aliasIds": [
+      "68",
+      "4196266146"
+    ]
+  },
+  "racine magique de bambouto sacré": {
+    "canonicalId": "7291",
+    "aliasIds": [
+      "7291",
+      "2034368826"
+    ]
+  },
+  "poil d'ouginak": {
+    "canonicalId": "2248",
+    "aliasIds": [
+      "2248",
+      "1200714663"
+    ]
+  },
+  "poils de wo wabbit": {
+    "canonicalId": "649",
+    "aliasIds": [
+      "649",
+      "3925155699"
+    ]
+  },
+  "poil de kanigrou": {
+    "canonicalId": "1890",
+    "aliasIds": [
+      "1890",
+      "888852781"
+    ]
+  },
+  "poils du minotoror": {
+    "canonicalId": "840",
+    "aliasIds": [
+      "840",
+      "477243448"
+    ]
+  },
+  "anneau vitalesque": {
+    "canonicalId": "851",
+    "aliasIds": [
+      "851",
+      "3543273755"
+    ]
+  },
+  "ecorce de brouture": {
+    "canonicalId": "8772",
+    "aliasIds": [
+      "8772",
+      "661776305"
+    ]
+  },
+  "ecorce de chiendent": {
+    "canonicalId": "8775",
+    "aliasIds": [
+      "8775",
+      "3082988945"
+    ]
+  },
+  "cuir de bouftou royal": {
+    "canonicalId": "886",
+    "aliasIds": [
+      "886",
+      "2281029653"
+    ]
+  },
+  "laine de bouftou royal": {
+    "canonicalId": "880",
+    "aliasIds": [
+      "880",
+      "1726282773"
+    ]
+  },
+  "laine de boufton blanc": {
+    "canonicalId": "881",
+    "aliasIds": [
+      "881",
+      "3116311533"
+    ]
+  },
+  "pétale magique du tournesol affamé": {
+    "canonicalId": "8157",
+    "aliasIds": [
+      "8157",
+      "1847253000"
+    ]
+  },
+  "etoffe du rat blanc": {
+    "canonicalId": "8486",
+    "aliasIds": [
+      "8486",
+      "3449859634"
+    ]
+  },
+  "sang de dragon cochon": {
+    "canonicalId": "477",
+    "aliasIds": [
+      "477",
+      "2062431325"
+    ]
+  },
+  "poils de pandule": {
+    "canonicalId": "7297",
+    "aliasIds": [
+      "7297",
+      "3247093467"
+    ]
+  },
+  "pétale passaoh": {
+    "canonicalId": "8747",
+    "aliasIds": [
+      "8747",
+      "3159317035"
+    ]
+  },
+  "bulbe passaoh": {
+    "canonicalId": "8751",
+    "aliasIds": [
+      "8751",
+      "3417367011"
+    ]
+  },
+  "ongle de kanigrou": {
+    "canonicalId": "2528",
+    "aliasIds": [
+      "2528",
+      "3090365450"
+    ]
+  },
+  "pétale morito": {
+    "canonicalId": "8748",
+    "aliasIds": [
+      "8748",
+      "3582448978"
+    ]
+  },
+  "plume du serpiplume": {
+    "canonicalId": "8309",
+    "aliasIds": [
+      "8309",
+      "1057980840"
+    ]
+  },
+  "cuir de boufton noir": {
+    "canonicalId": "884",
+    "aliasIds": [
+      "884",
+      "2990680971"
+    ]
+  },
+  "cuir de porkass": {
+    "canonicalId": "2275",
+    "aliasIds": [
+      "2275",
+      "3268571208"
+    ]
+  },
+  "fleur de pissenlit diabolique": {
+    "canonicalId": "306",
+    "aliasIds": [
+      "306",
+      "3791307147"
+    ]
+  },
+  "cuir de bouftou": {
+    "canonicalId": "304",
+    "aliasIds": [
+      "304",
+      "1925853735"
+    ]
+  },
+  "cuir de sanglier": {
+    "canonicalId": "486",
+    "aliasIds": [
+      "486",
+      "4281224224"
+    ]
+  },
+  "peau de serpentin": {
+    "canonicalId": "1891",
+    "aliasIds": [
+      "1891",
+      "1898248082"
+    ]
+  },
+  "slip de bwork archer": {
+    "canonicalId": "3208",
+    "aliasIds": [
+      "3208",
+      "1764378869"
+    ]
+  },
+  "queue de croc gland": {
+    "canonicalId": "2501",
+    "aliasIds": [
+      "2501",
+      "4156474586"
+    ]
+  },
+  "peau de pandikaze": {
+    "canonicalId": "7260",
+    "aliasIds": [
+      "7260",
+      "1613669424"
+    ]
+  },
+  "pierre de granit": {
+    "canonicalId": "450",
+    "aliasIds": [
+      "450",
+      "4068703822"
+    ]
+  },
+  "charbon": {
+    "canonicalId": "447",
+    "aliasIds": [
+      "447",
+      "925757806"
+    ]
+  },
+  "aile de dragoeuf volant": {
+    "canonicalId": "8359",
+    "aliasIds": [
+      "8359",
+      "3059927737"
+    ]
+  },
+  "peau de drakoalak": {
+    "canonicalId": "8054",
+    "aliasIds": [
+      "8054",
+      "856380681"
+    ]
+  },
+  "poil de bworkette": {
+    "canonicalId": "8389",
+    "aliasIds": [
+      "8389",
+      "1132932049"
+    ]
+  },
+  "peau de shin larve": {
+    "canonicalId": "8385",
+    "aliasIds": [
+      "8385",
+      "3697233638"
+    ]
+  },
+  "slip en cuir moulant du vampire": {
+    "canonicalId": "756",
+    "aliasIds": [
+      "756",
+      "3273930521"
+    ]
+  },
+  "peau de rat blanc": {
+    "canonicalId": "8492",
+    "aliasIds": [
+      "8492",
+      "3573393266"
+    ]
+  },
+  "peau de kanigrou": {
+    "canonicalId": "7030",
+    "aliasIds": [
+      "7030",
+      "3547897988"
+    ]
+  },
+  "etoffe du fauchalak": {
+    "canonicalId": "8082",
+    "aliasIds": [
+      "8082",
+      "3852587787"
+    ]
+  },
+  "coco du bitouf sombre": {
+    "canonicalId": "8776",
+    "aliasIds": [
+      "8776",
+      "4187256360"
+    ]
+  },
+  "oreille de kanigrou": {
+    "canonicalId": "2551",
+    "aliasIds": [
+      "2551",
+      "2964510885"
+    ]
+  },
+  "bandelettes": {
+    "canonicalId": "2286",
+    "aliasIds": [
+      "2286",
+      "728986115"
+    ]
+  },
+  "bandelette du guerrier koalak": {
+    "canonicalId": "8001",
+    "aliasIds": [
+      "8001",
+      "2039461736"
+    ]
+  },
+  "poudre explosive de gourlo": {
+    "canonicalId": "8761",
+    "aliasIds": [
+      "8761",
+      "1783125164"
+    ]
+  },
+  "poils de barbe du bwork mage": {
+    "canonicalId": "409",
+    "aliasIds": [
+      "409",
+      "437137410"
+    ]
+  },
+  "plume de corbac": {
+    "canonicalId": "1889",
+    "aliasIds": [
+      "1889",
+      "2311094829"
+    ]
+  },
+  "souche de l'abrakleur clair": {
+    "canonicalId": "8797",
+    "aliasIds": [
+      "8797",
+      "1481752"
+    ]
+  },
+  "laine de boufton noir": {
+    "canonicalId": "885",
+    "aliasIds": [
+      "885",
+      "717509410"
+    ]
+  },
+  "poils de yokai firefoux": {
+    "canonicalId": "7294",
+    "aliasIds": [
+      "7294",
+      "4267881566"
+    ]
+  },
+  "noix de kokoko": {
+    "canonicalId": "997",
+    "aliasIds": [
+      "997",
+      "2332839853"
+    ]
+  },
+  "graine de pandouille": {
+    "canonicalId": "7059",
+    "aliasIds": [
+      "7059",
+      "4270775511"
+    ]
+  },
+  "chaîne de l'ouginak": {
+    "canonicalId": "2492",
+    "aliasIds": [
+      "2492",
+      "218082552"
+    ]
+  },
+  "plume de corbac apprivoisé": {
+    "canonicalId": "8252",
+    "aliasIds": [
+      "8252",
+      "1469954088"
+    ]
+  },
+  "carapace de scaratos": {
+    "canonicalId": "8308",
+    "aliasIds": [
+      "8308",
+      "1699431176"
+    ]
+  },
+  "peau de skeunk": {
+    "canonicalId": "8404",
+    "aliasIds": [
+      "8404",
+      "1647271914"
+    ]
+  },
+  "sépale de nerbe": {
+    "canonicalId": "8780",
+    "aliasIds": [
+      "8780",
+      "3132880304"
+    ]
+  },
+  "calice de fécorce": {
+    "canonicalId": "8781",
+    "aliasIds": [
+      "8781",
+      "4982396"
+    ]
+  },
+  "peau lacérée du tynril": {
+    "canonicalId": "8997",
+    "aliasIds": [
+      "8997",
+      "1371982867"
+    ]
+  },
+  "fibre de chanvre": {
+    "canonicalId": "426",
+    "aliasIds": [
+      "426",
+      "2500821258"
+    ]
+  },
+  "corne brisée de crocabulia": {
+    "canonicalId": "8365",
+    "aliasIds": [
+      "8365",
+      "3232655207"
+    ]
+  },
+  "gelée à la fraise": {
+    "canonicalId": "368",
+    "aliasIds": [
+      "368",
+      "852236707"
+    ]
+  },
+  "bâton de boisaille": {
+    "canonicalId": "1124436745",
+    "aliasIds": [
+      "1124436745",
+      "4194618883346844000"
+    ]
+  },
+  "racine de fourbasse": {
+    "canonicalId": "6735",
+    "aliasIds": [
+      "6735",
+      "2779834425"
+    ]
+  },
+  "défense de sanglier des plaines": {
+    "canonicalId": "2516",
+    "aliasIds": [
+      "2516",
+      "3572961750"
+    ]
+  },
+  "ecorce de fourbasse": {
+    "canonicalId": "6737",
+    "aliasIds": [
+      "6737",
+      "3590677365"
+    ]
+  },
+  "tibia de koalak fossoyeur": {
+    "canonicalId": "8057",
+    "aliasIds": [
+      "8057",
+      "424068877"
+    ]
+  },
+  "tissu pourpre": {
+    "canonicalId": "2273",
+    "aliasIds": [
+      "2273",
+      "2573485475"
+    ]
+  },
+  "orchidée freyesque": {
+    "canonicalId": "593",
+    "aliasIds": [
+      "593",
+      "2356802604"
+    ]
+  },
+  "etoffe zoth": {
+    "canonicalId": "8800",
+    "aliasIds": [
+      "8800",
+      "3669254721"
+    ]
+  },
+  "puissant bâton feuillu": {
+    "canonicalId": "956777261",
+    "aliasIds": [
+      "-474394189629989440",
+      "956777261"
+    ]
+  },
+  "pierre d'emeraude": {
+    "canonicalId": "544",
+    "aliasIds": [
+      "544",
+      "3697255358"
+    ]
+  },
+  "poudre d'eniripsa": {
+    "canonicalId": "2239",
+    "aliasIds": [
+      "2239",
+      "3606041358"
+    ]
+  },
+  "poils de wabbit": {
+    "canonicalId": "648",
+    "aliasIds": [
+      "648",
+      "829263862"
+    ]
+  },
+  "poils de black tiwabbit": {
+    "canonicalId": "646",
+    "aliasIds": [
+      "646",
+      "2827602046"
+    ]
+  },
+  "gelée bleutée": {
+    "canonicalId": "757",
+    "aliasIds": [
+      "757",
+      "2018170050"
+    ]
+  },
+  "protection usagée du bworker": {
+    "canonicalId": "6904",
+    "aliasIds": [
+      "6904",
+      "919408229"
+    ]
+  },
+  "etoffe de gourlo le terrible": {
+    "canonicalId": "8995",
+    "aliasIds": [
+      "8995",
+      "1878894733"
+    ]
+  },
+  "teinture magique bleutée": {
+    "canonicalId": "529121892",
+    "aliasIds": [
+      "529121892",
+      "6500450261642692000"
+    ]
+  },
+  "epaulette du dark vlad": {
+    "canonicalId": "2299",
+    "aliasIds": [
+      "2299",
+      "3023302844"
+    ]
+  },
+  "etoffe de kanigrou": {
+    "canonicalId": "2550",
+    "aliasIds": [
+      "2550",
+      "663898148"
+    ]
+  },
+  "etoffe du prespic": {
+    "canonicalId": "653",
+    "aliasIds": [
+      "653",
+      "2686381266"
+    ]
+  },
+  "peau de dragoeuf volant": {
+    "canonicalId": "8360",
+    "aliasIds": [
+      "8360",
+      "3702471807"
+    ]
+  },
+  "poil de sanglier des plaines": {
+    "canonicalId": "1894",
+    "aliasIds": [
+      "1894",
+      "99324675"
+    ]
+  },
+  "mojo du mulou": {
+    "canonicalId": "8396",
+    "aliasIds": [
+      "8396",
+      "2019761599"
+    ]
+  },
+  "queue emplumée du rasboul majeur": {
+    "canonicalId": "8798",
+    "aliasIds": [
+      "8798",
+      "3108701104"
+    ]
+  },
+  "etoffe du sanglier": {
+    "canonicalId": "652",
+    "aliasIds": [
+      "652",
+      "3654868330"
+    ]
+  },
+  "etoffe magique de moon": {
+    "canonicalId": "8384",
+    "aliasIds": [
+      "8384",
+      "1592157667"
+    ]
+  },
+  "plume vibrante du tofu royal": {
+    "canonicalId": "8387",
+    "aliasIds": [
+      "8387",
+      "984895642"
+    ]
+  },
+  "etoffe de fantôme pandore": {
+    "canonicalId": "7393",
+    "aliasIds": [
+      "7393",
+      "2540956282"
+    ]
+  },
+  "oreilles de loup": {
+    "canonicalId": "2317",
+    "aliasIds": [
+      "2317",
+      "2605593339"
+    ]
+  },
+  "scalp de bwork archer": {
+    "canonicalId": "2268",
+    "aliasIds": [
+      "2268",
+      "4143976064"
+    ]
+  },
+  "etamine de floribonde": {
+    "canonicalId": "8778",
+    "aliasIds": [
+      "8778",
+      "2022823769"
+    ]
+  },
+  "cuir de mominotor": {
+    "canonicalId": "8324",
+    "aliasIds": [
+      "8324",
+      "46884264"
+    ]
+  },
+  "crête de porkass": {
+    "canonicalId": "2479",
+    "aliasIds": [
+      "2479",
+      "1159107743"
+    ]
+  },
+  "kristalite": {
+    "canonicalId": "929",
+    "aliasIds": [
+      "929",
+      "274917619"
+    ]
+  },
+  "cloaque du poolay": {
+    "canonicalId": "8787",
+    "aliasIds": [
+      "8787",
+      "589716373"
+    ]
+  },
+  "pétale kouraçao": {
+    "canonicalId": "8745",
+    "aliasIds": [
+      "8745",
+      "2983705284"
+    ]
+  },
+  "bractée de chiendent": {
+    "canonicalId": "8782",
+    "aliasIds": [
+      "8782",
+      "17613363"
+    ]
+  },
+  "moustache de kolérat": {
+    "canonicalId": "2301",
+    "aliasIds": [
+      "2301",
+      "4265552499"
+    ]
+  },
+  "oreilles du tiwabbit": {
+    "canonicalId": "360",
+    "aliasIds": [
+      "360",
+      "354229931"
+    ]
+  },
+  "os invisible du chafer invisible": {
+    "canonicalId": "430",
+    "aliasIds": [
+      "430",
+      "1337020376"
+    ]
+  },
+  "coeur du maitre corbac": {
+    "canonicalId": "2525",
+    "aliasIds": [
+      "2525",
+      "1051130540"
+    ]
+  },
+  "pétale de blop": {
+    "canonicalId": "2557",
+    "aliasIds": [
+      "2557",
+      "819417456"
+    ]
+  },
+  "corne de dragoss noir": {
+    "canonicalId": "8344",
+    "aliasIds": [
+      "8344",
+      "1272739286"
+    ]
+  },
+  "testicules magiques du mulou": {
+    "canonicalId": "2805",
+    "aliasIds": [
+      "2805",
+      "1794848018"
+    ]
+  },
+  "peau de yokai firefoux": {
+    "canonicalId": "7300",
+    "aliasIds": [
+      "7300",
+      "544385326"
+    ]
+  },
+  "testicules du tanukouï san": {
+    "canonicalId": "7386",
+    "aliasIds": [
+      "7386",
+      "2476853569"
+    ]
+  },
+  "etoffe de fantôme pandule": {
+    "canonicalId": "7384",
+    "aliasIds": [
+      "7384",
+      "770917434"
+    ]
+  },
+  "os de fantôme maho firefoux": {
+    "canonicalId": "7404",
+    "aliasIds": [
+      "7404",
+      "3560254301"
+    ]
+  },
+  "morceau de caleçon de gourlo": {
+    "canonicalId": "8758",
+    "aliasIds": [
+      "8758",
+      "474285462"
+    ]
+  },
+  "pétale malibout": {
+    "canonicalId": "8746",
+    "aliasIds": [
+      "8746",
+      "1221276037"
+    ]
+  },
+  "bulbe malibout": {
+    "canonicalId": "8750",
+    "aliasIds": [
+      "8750",
+      "2421256492"
+    ]
+  },
+  "etoffe de sphincter cell": {
+    "canonicalId": "8487",
+    "aliasIds": [
+      "8487",
+      "2356369810"
+    ]
+  },
+  "crâne de chef crocodaille": {
+    "canonicalId": "6738",
+    "aliasIds": [
+      "6738",
+      "4292544508"
+    ]
+  },
+  "oeil de meulou": {
+    "canonicalId": "2580",
+    "aliasIds": [
+      "2580",
+      "2596170303"
+    ]
+  },
+  "corne du minotot": {
+    "canonicalId": "8409",
+    "aliasIds": [
+      "8409",
+      "1531083879"
+    ]
+  },
+  "pistil du tynril": {
+    "canonicalId": "8777",
+    "aliasIds": [
+      "8777",
+      "2749471214"
+    ]
+  },
+  "cuir de déminoboule": {
+    "canonicalId": "8323",
+    "aliasIds": [
+      "8323",
+      "421899515"
+    ]
+  },
+  "dent de rat blanc": {
+    "canonicalId": "8489",
+    "aliasIds": [
+      "8489",
+      "4073705079"
+    ]
+  },
+  "la broche céleste": {
+    "canonicalId": "159",
+    "aliasIds": [
+      "159",
+      "955244464"
+    ]
+  },
+  "os de fantôme tanukouï san": {
+    "canonicalId": "7410",
+    "aliasIds": [
+      "7410",
+      "2539919575"
+    ]
+  },
+  "poils de tanukouï san": {
+    "canonicalId": "7284",
+    "aliasIds": [
+      "7284",
+      "3746904860"
+    ]
+  },
+  "gelée citron": {
+    "canonicalId": "2436",
+    "aliasIds": [
+      "2436",
+      "1356958901"
+    ]
+  },
+  "gelée fraise royale": {
+    "canonicalId": "2242",
+    "aliasIds": [
+      "2242",
+      "1438104342"
+    ]
+  },
+  "gelée menthe royale": {
+    "canonicalId": "2241",
+    "aliasIds": [
+      "2241",
+      "1859248221"
+    ]
+  },
+  "gelée citron royale": {
+    "canonicalId": "2437",
+    "aliasIds": [
+      "2437",
+      "511026270"
+    ]
+  },
+  "gelée bleutée royale": {
+    "canonicalId": "370",
+    "aliasIds": [
+      "370",
+      "1312069324"
+    ]
+  },
+  "pierre de diamant": {
+    "canonicalId": "543",
+    "aliasIds": [
+      "543",
+      "1998992548"
+    ]
+  },
+  "pierre de crystaloboule": {
+    "canonicalId": "1679",
+    "aliasIds": [
+      "1679",
+      "38919075"
+    ]
+  },
+  "fémur du chafer archer": {
+    "canonicalId": "433",
+    "aliasIds": [
+      "433",
+      "2332036566"
+    ]
+  },
+  "glouto rhum": {
+    "canonicalId": "2632",
+    "aliasIds": [
+      "2632",
+      "2901222964"
+    ]
+  },
+  "rhum fourbe": {
+    "canonicalId": "2633",
+    "aliasIds": [
+      "2633",
+      "3831627562"
+    ]
+  },
+  "lait de dragodinde": {
+    "canonicalId": "2596",
+    "aliasIds": [
+      "2596",
+      "499412757"
+    ]
+  },
+  "potion dantegoulesque": {
+    "canonicalId": "3670476206",
+    "aliasIds": [
+      "3670476206",
+      "3732860557895344600"
+    ]
+  },
+  "oeuf de dragoeuf noir": {
+    "canonicalId": "846",
+    "aliasIds": [
+      "846",
+      "88279436"
+    ]
+  },
+  "dragolyre": {
+    "canonicalId": "867",
+    "aliasIds": [
+      "867",
+      "2147672678"
+    ]
+  },
+  "viscères du scarabosse doré": {
+    "canonicalId": "8137",
+    "aliasIds": [
+      "8137",
+      "1298510624"
+    ]
+  },
+  "la crinière de badoul": {
+    "canonicalId": "1461046890",
+    "aliasIds": [
+      "-2024601092910897000",
+      "1461046890"
+    ]
+  },
+  "ecaille poisseuse": {
+    "canonicalId": "8680",
+    "aliasIds": [
+      "8680",
+      "671490872"
+    ]
+  },
+  "griffe rose": {
+    "canonicalId": "1103639149",
+    "aliasIds": [
+      "-6397684377438663000",
+      "1103639149"
+    ]
+  },
+  "griffe de grizmine": {
+    "canonicalId": "3905624445",
+    "aliasIds": [
+      "-2662076210035657000",
+      "3905624445"
+    ]
+  },
+  "goultard": {
+    "canonicalId": "1939283455",
+    "aliasIds": [
+      "1939283455",
+      "1671709321732443400"
+    ]
+  },
+  "razielle": {
+    "canonicalId": "845289949",
+    "aliasIds": [
+      "845289949",
+      "4103446259482052600"
+    ]
+  },
+  "fausse griffe de ceangal": {
+    "canonicalId": "537703024",
+    "aliasIds": [
+      "-4079358107273429500",
+      "537703024"
+    ]
+  },
+  "karnak": {
+    "canonicalId": "1700374552",
+    "aliasIds": [
+      "-9201864035187089000",
+      "1700374552"
+    ]
+  },
+  "marteau du bouftou": {
+    "canonicalId": "2037449996",
+    "aliasIds": [
+      "-7470365554319901000",
+      "2037449996"
+    ]
+  },
+  "huile de koode": {
+    "canonicalId": "397",
+    "aliasIds": [
+      "397",
+      "3139681617"
+    ]
+  },
+  "lance cassée": {
+    "canonicalId": "2634",
+    "aliasIds": [
+      "2634",
+      "2725847929"
+    ]
+  },
+  "belle amulette du hibou": {
+    "canonicalId": "69",
+    "aliasIds": [
+      "69",
+      "3266506073"
+    ]
+  },
+  "corne de dragoss blanc": {
+    "canonicalId": "8346",
+    "aliasIds": [
+      "8346",
+      "2594791372"
+    ]
+  },
+  "dent de shin larve": {
+    "canonicalId": "8386",
+    "aliasIds": [
+      "8386",
+      "3466819354"
+    ]
+  },
+  "bwak squelettique": {
+    "canonicalId": "2623",
+    "aliasIds": [
+      "2623",
+      "2222747619"
+    ]
+  },
+  "potion de flambée": {
+    "canonicalId": "1343",
+    "aliasIds": [
+      "1343",
+      "2688561119"
+    ]
+  },
+  "os de fantôme léopardo": {
+    "canonicalId": "7403",
+    "aliasIds": [
+      "7403",
+      "2750999352"
+    ]
+  },
+  "amulette du petit hibou": {
+    "canonicalId": "764",
+    "aliasIds": [
+      "764",
+      "1359114466"
+    ]
+  }
+}

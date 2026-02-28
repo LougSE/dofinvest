@@ -57,3 +57,8 @@ export interface DofapiItem {
 export interface ServerPrices {
   [resourceId: number]: number;
 }
+
+export interface PriceHistoryEntry {
+  price: number;
+  timestamp: string;
+}

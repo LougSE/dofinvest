@@ -1,24 +1,73 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Coins, Save, RefreshCw, Database } from "lucide-react";
+import { Coins, Save, RefreshCw, Database, TrendingUp, TrendingDown, Activity, BarChart3 } from "lucide-react";
 import { useItemsSearch } from "@/hooks/useItemsSearch";
 import { usePrices } from "@/hooks/usePrices";
-import { DofusItem, Resource } from "@/types/dofus";
+import { DofusItem, PriceHistoryEntry, Resource } from "@/types/dofus";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { searchLocalItems } from "@/lib/localDataClient";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 const formatKamas = (value: number) => value.toLocaleString("fr-FR");
+const formatCompactKamas = (value: number) => {
+  if (value >= 1000000) return `${(value / 1000000).toFixed(2)}M`;
+  if (value >= 1000) return `${(value / 1000).toFixed(0)}k`;
+  return value.toLocaleString("fr-FR");
+};
+
+type HistoryEntityType = "resource" | "item";
+type HistoryRange = "24h" | "7d" | "30d" | "all";
+
+interface HistoryOption {
+  id: number;
+  label: string;
+  type: HistoryEntityType;
+}
+
+const historyChartConfig = {
+  price: {
+    label: "Prix",
+    color: "hsl(var(--primary))",
+  },
+  trend: {
+    label: "Tendance",
+    color: "hsl(var(--gold))",
+  },
+};
 
 const Prices = () => {
   const [datasetVersion, setDatasetVersion] = useState<"20" | "129">("20");
   const [server] = useState("Abrak");
   const { items: searchResults } = useItemsSearch({ query: "", craftableOnly: true, page: 1, dataset: datasetVersion });
   const [selection, setSelection] = useState<DofusItem[]>([]);
-  const { resourcePrices, itemPrices, setResourcePrices, setItemPrices, savePrices, resetPrices } = usePrices(server, datasetVersion);
+  const [allItems, setAllItems] = useState<DofusItem[]>([]);
+  const [historyType, setHistoryType] = useState<HistoryEntityType>("resource");
+  const [historyTargetId, setHistoryTargetId] = useState<string>("");
+  const [historyRange, setHistoryRange] = useState<HistoryRange>("all");
+  const { resourcePrices, itemPrices, resourcePriceHistory, itemPriceHistory, updateResourcePrice, updateItemPrice, savePrices, resetPrices } = usePrices(server, datasetVersion);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    searchLocalItems({ query: "", craftableOnly: false, dataset: datasetVersion })
+      .then((items) => {
+        if (!cancelled) setAllItems(items);
+      })
+      .catch((err) => {
+        console.error("Failed to load items for history", err);
+        if (!cancelled) setAllItems([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [datasetVersion]);
 
   const aggregatedResources = useMemo(() => {
     const map: Record<number, Resource> = {};
@@ -43,12 +92,12 @@ const Prices = () => {
 
   const handleResourceChange = (id: number, value: string) => {
     const cleanValue = parseInt(value.replace(/\D/g, "")) || 0;
-    setResourcePrices((prev) => ({ ...prev, [id]: cleanValue }));
+    updateResourcePrice(id, cleanValue);
   };
 
   const handleItemPriceChange = (id: number, value: string) => {
     const cleanValue = parseInt(value.replace(/\D/g, "")) || 0;
-    setItemPrices((prev) => ({ ...prev, [id]: cleanValue }));
+    updateItemPrice(id, cleanValue);
   };
 
   const handleSave = () => {
@@ -57,9 +106,142 @@ const Prices = () => {
 
   const handleReset = () => {
     resetPrices();
-    setResourcePrices({});
-    setItemPrices({});
   };
+
+  const itemNameMap = useMemo(() => {
+    const map: Record<number, string> = {};
+    allItems.forEach((item) => {
+      map[item.id] = item.name;
+      (item.recipe || []).forEach((ingredient) => {
+        if (!map[ingredient.itemId]) {
+          map[ingredient.itemId] = ingredient.name;
+        }
+      });
+    });
+    return map;
+  }, [allItems]);
+
+  const historyOptions = useMemo<HistoryOption[]>(() => {
+    const resourceIds = Array.from(new Set([
+      ...Object.keys(resourcePriceHistory).map(Number),
+      ...Object.keys(resourcePrices).map(Number),
+    ]));
+    const itemIds = Array.from(new Set([
+      ...Object.keys(itemPriceHistory).map(Number),
+      ...Object.keys(itemPrices).map(Number),
+    ]));
+
+    const buildLabel = (id: number, type: HistoryEntityType) => {
+      const name = itemNameMap[id] || `${type === "resource" ? "Resource" : "Item"} #${id}`;
+      return name;
+    };
+
+    const resources = resourceIds
+      .map((id) => ({ id, type: "resource" as const, label: buildLabel(id, "resource") }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+
+    const items = itemIds
+      .map((id) => ({ id, type: "item" as const, label: buildLabel(id, "item") }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+
+    return [...resources, ...items];
+  }, [resourcePriceHistory, itemPriceHistory, resourcePrices, itemPrices, itemNameMap]);
+
+  const historyOptionsForType = useMemo(
+    () => historyOptions.filter((option) => option.type === historyType),
+    [historyOptions, historyType],
+  );
+
+  useEffect(() => {
+    if (!historyOptionsForType.length) {
+      setHistoryTargetId("");
+      return;
+    }
+
+    const exists = historyOptionsForType.some((option) => String(option.id) === historyTargetId);
+    if (!exists) {
+      setHistoryTargetId(String(historyOptionsForType[0].id));
+    }
+  }, [historyOptionsForType, historyTargetId]);
+
+  const selectedHistoryEntries = useMemo<PriceHistoryEntry[]>(() => {
+    const targetId = Number(historyTargetId);
+    if (!targetId) return [];
+    return historyType === "resource"
+      ? resourcePriceHistory[targetId] ?? []
+      : itemPriceHistory[targetId] ?? [];
+  }, [historyTargetId, historyType, resourcePriceHistory, itemPriceHistory]);
+
+  const filteredHistoryEntries = useMemo<PriceHistoryEntry[]>(() => {
+    if (historyRange === "all") return selectedHistoryEntries;
+
+    const now = Date.now();
+    const rangeMs =
+      historyRange === "24h"
+        ? 24 * 60 * 60 * 1000
+        : historyRange === "7d"
+          ? 7 * 24 * 60 * 60 * 1000
+          : 30 * 24 * 60 * 60 * 1000;
+
+    return selectedHistoryEntries.filter((entry) => {
+      const timestamp = new Date(entry.timestamp).getTime();
+      return now - timestamp <= rangeMs;
+    });
+  }, [selectedHistoryEntries, historyRange]);
+
+  const selectedHistoryOption = useMemo(
+    () => historyOptions.find((option) => String(option.id) === historyTargetId && option.type === historyType),
+    [historyOptions, historyTargetId, historyType],
+  );
+
+  const historyChartData = useMemo(() => {
+    return filteredHistoryEntries.map((entry, index, entries) => {
+      const date = new Date(entry.timestamp);
+      const movingWindow = entries.slice(Math.max(0, index - 2), index + 1);
+      const trend = Math.round(
+        movingWindow.reduce((sum, current) => sum + current.price, 0) / movingWindow.length,
+      );
+
+      return {
+        index: index + 1,
+        price: entry.price,
+        trend,
+        timestamp: entry.timestamp,
+        label: date.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit" }),
+        fullLabel: date.toLocaleString("fr-FR"),
+      };
+    });
+  }, [filteredHistoryEntries]);
+
+  const historyStats = useMemo(() => {
+    if (!filteredHistoryEntries.length) {
+      return null;
+    }
+
+    const prices = filteredHistoryEntries.map((entry) => entry.price);
+    const latest = prices[prices.length - 1];
+    const previous = prices.length > 1 ? prices[prices.length - 2] : null;
+    const min = Math.min(...prices);
+    const max = Math.max(...prices);
+    const average = Math.round(prices.reduce((sum, price) => sum + price, 0) / prices.length);
+    const delta = previous === null ? 0 : latest - previous;
+    const deltaPercent = previous && previous > 0 ? (delta / previous) * 100 : null;
+    const firstSeen = filteredHistoryEntries[0]?.timestamp ?? null;
+    const lastSeen = filteredHistoryEntries[filteredHistoryEntries.length - 1]?.timestamp ?? null;
+
+    return {
+      latest,
+      previous,
+      min,
+      max,
+      average,
+      delta,
+      deltaPercent,
+      points: prices.length,
+      firstSeen,
+      lastSeen,
+    };
+  }, [filteredHistoryEntries]);
 
   const toggleSelection = (item: DofusItem) => {
     setSelection((prev) => {
@@ -236,7 +418,10 @@ const Prices = () => {
                   <span>Sync locale par serveur ({server})</span>
                 </div>
                 <p>
-                  Les prix saisis sont sauvegardés dans localStorage par serveur et version de jeu. Ils seront préremplis lors de la prochaine analyse.
+                  Les prix saisis sont sauvegardés automatiquement dans localStorage par serveur et version de jeu, avec historique pour les futurs KPI et graphiques.
+                </p>
+                <p>
+                  Historique disponible: {Object.keys(resourcePriceHistory).length} ressources, {Object.keys(itemPriceHistory).length} items HDV.
                 </p>
               </div>
 
@@ -261,6 +446,252 @@ const Prices = () => {
               </ul>
             </div>
           </div>
+        </section>
+
+        <section className="space-y-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-primary text-sm">
+                <BarChart3 className="h-4 w-4" />
+                <span>Price history</span>
+              </div>
+              <h3 className="mt-4 text-2xl font-heading font-bold text-foreground">
+                Historique et KPI des prix
+              </h3>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Analyse les variations que tu saisis au fil du temps pour une ressource ou un item HDV.
+              </p>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Type</p>
+                <Select value={historyType} onValueChange={(value) => setHistoryType(value as HistoryEntityType)}>
+                  <SelectTrigger className="min-w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="resource">Ressource</SelectItem>
+                    <SelectItem value="item">Item HDV</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Période</p>
+                <div className="flex flex-wrap gap-2">
+                  {(["24h", "7d", "30d", "all"] as HistoryRange[]).map((range) => (
+                    <Button
+                      key={range}
+                      type="button"
+                      size="sm"
+                      variant={historyRange === range ? "lime" : "outline"}
+                      onClick={() => setHistoryRange(range)}
+                    >
+                      {range === "all" ? "Tout" : range}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  {historyType === "resource" ? "Ressource suivie" : "Item suivi"}
+                </p>
+                <Select
+                  value={historyTargetId}
+                  onValueChange={setHistoryTargetId}
+                  disabled={!historyOptionsForType.length}
+                >
+                  <SelectTrigger className="min-w-[260px]">
+                    <SelectValue placeholder="Choisir une entrée" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {historyOptionsForType.map((option) => (
+                      <SelectItem key={`${option.type}-${option.id}`} value={String(option.id)}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          {!historyStats || !selectedHistoryOption ? (
+            <div className="card-dofus rounded-xl p-8 text-center">
+              <p className="text-lg font-semibold text-foreground">Pas encore d’historique exploitable</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Saisis quelques prix, puis reviens ici pour voir les tendances et les KPI.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div className="card-dofus rounded-xl p-5">
+                  <p className="text-sm text-muted-foreground">Dernier prix</p>
+                  <p className="mt-2 text-3xl font-heading font-bold text-primary">
+                    {formatCompactKamas(historyStats.latest)}
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {historyStats.lastSeen ? new Date(historyStats.lastSeen).toLocaleString("fr-FR") : "N/A"}
+                  </p>
+                </div>
+
+                <div className="card-dofus rounded-xl p-5">
+                  <p className="text-sm text-muted-foreground">Variation récente</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    {historyStats.delta >= 0 ? (
+                      <TrendingUp className="h-5 w-5 text-profit" />
+                    ) : (
+                      <TrendingDown className="h-5 w-5 text-loss" />
+                    )}
+                    <p className={cn("text-3xl font-heading font-bold", historyStats.delta >= 0 ? "text-profit" : "text-loss")}>
+                      {historyStats.delta >= 0 ? "+" : ""}{formatCompactKamas(historyStats.delta)}
+                    </p>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {historyStats.deltaPercent === null
+                      ? "Pas assez de points pour un pourcentage"
+                      : `${historyStats.deltaPercent >= 0 ? "+" : ""}${historyStats.deltaPercent.toFixed(1)}% vs point précédent`}
+                  </p>
+                </div>
+
+                <div className="card-dofus rounded-xl p-5">
+                  <p className="text-sm text-muted-foreground">Range observée</p>
+                  <p className="mt-2 text-3xl font-heading font-bold text-foreground">
+                    {formatCompactKamas(historyStats.min)} - {formatCompactKamas(historyStats.max)}
+                  </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {historyStats.points} points enregistrés sur {historyRange === "all" ? "tout l’historique" : historyRange}
+                  </p>
+                </div>
+
+                <div className="card-dofus rounded-xl p-5">
+                  <p className="text-sm text-muted-foreground">Prix moyen</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-primary" />
+                    <p className="text-3xl font-heading font-bold text-foreground">
+                      {formatCompactKamas(historyStats.average)}
+                    </p>
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Depuis le {historyStats.firstSeen ? new Date(historyStats.firstSeen).toLocaleDateString("fr-FR") : "N/A"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
+                <div className="card-dofus rounded-xl p-5">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">
+                        {historyType === "resource" ? "Ressource suivie" : "Item HDV suivi"}
+                      </p>
+                      <h4 className="text-xl font-semibold text-foreground">{selectedHistoryOption.label}</h4>
+                    </div>
+                    <Badge variant="outline" className="border-primary/30 text-primary">
+                      {historyStats.points} points
+                    </Badge>
+                  </div>
+
+                  <Separator className="my-4" />
+
+                  <ChartContainer config={historyChartConfig} className="h-[320px] w-full">
+                    <LineChart data={historyChartData} margin={{ top: 12, right: 12, left: 4, bottom: 4 }}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis
+                        dataKey="label"
+                        tickLine={false}
+                        axisLine={false}
+                        minTickGap={24}
+                      />
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        tickFormatter={(value) => formatCompactKamas(Number(value))}
+                        width={72}
+                      />
+                      <ChartTooltip
+                        cursor={false}
+                        content={
+                          <ChartTooltipContent
+                            hideLabel
+                            formatter={(value, name) => (
+                              <div className="flex min-w-[180px] items-center justify-between gap-4">
+                                <span className="text-muted-foreground">
+                                  {name === "trend" ? "Tendance" : "Prix"}
+                                </span>
+                                <span className="font-mono font-medium text-foreground">
+                                  {formatKamas(Number(value))} kamas
+                                </span>
+                              </div>
+                            )}
+                          />
+                        }
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="price"
+                        stroke="var(--color-price)"
+                        strokeWidth={3}
+                        dot={{ r: 3, fill: "var(--color-price)" }}
+                        activeDot={{ r: 5 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="trend"
+                        stroke="var(--color-trend)"
+                        strokeWidth={2}
+                        strokeDasharray="6 4"
+                        dot={false}
+                        activeDot={{ r: 4 }}
+                      />
+                    </LineChart>
+                  </ChartContainer>
+                </div>
+
+                <div className="card-dofus rounded-xl p-5">
+                  <p className="text-sm text-muted-foreground">Derniers relevés</p>
+                  <h4 className="mt-1 text-xl font-semibold text-foreground">Journal récent</h4>
+                  <Separator className="my-4" />
+
+                  <div className="space-y-3 max-h-[320px] overflow-y-auto pr-2">
+                    {[...filteredHistoryEntries].reverse().slice(0, 12).map((entry, index) => {
+                      const originalIndex = filteredHistoryEntries.length - 1 - index;
+                      const previousEntry = originalIndex > 0 ? filteredHistoryEntries[originalIndex - 1] : null;
+                      const delta = previousEntry ? entry.price - previousEntry.price : null;
+
+                      return (
+                        <div
+                          key={`${entry.timestamp}-${entry.price}-${index}`}
+                          className="rounded-lg border border-border bg-secondary/30 p-3"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-foreground">{formatKamas(entry.price)} kamas</p>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(entry.timestamp).toLocaleString("fr-FR")}
+                              </p>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                "border-current/20",
+                                delta === null ? "text-muted-foreground" : delta >= 0 ? "text-profit" : "text-loss",
+                              )}
+                            >
+                              {delta === null ? "Initial" : `${delta >= 0 ? "+" : ""}${formatCompactKamas(delta)}`}
+                            </Badge>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </section>
       </main>
     </div>

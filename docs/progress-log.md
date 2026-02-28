@@ -5,6 +5,11 @@
 - Use it as a quick reference to see what changed (UI/UX, data, logic) and when.
 - Add new entries at the bottom with the date and concise bullets (avoid verbosity).
 
+## 2026-02-28
+- Added persistent price history for resources and HDV items; every price edit now records current value plus append-only history in localStorage.
+- Extended `/prices` with history analytics: entity selector, time-range filters (`24h`, `7d`, `30d`, all), KPI cards, trend chart, and recent price journal.
+- Audited the Retro dataset and normalized duplicate resource IDs by name: generated a canonical alias map, rewrote `items-129.json` recipes to canonical IDs, and kept cache/history migration so existing saved prices still resolve.
+
 ## 2026-02-02
 - Persisted all analysis state (HDV prices, quantities, Include flags, grayed resources) via debounced autosave; price edits no longer reset.
 - KPI “Total resource cost” now ignores grayed resources; added “Gray all / Ungray all” toggle in aggregated resources.
