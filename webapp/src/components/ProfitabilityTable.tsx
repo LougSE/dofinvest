@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, Fragment } from "react";
+import { ChangeEvent, useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { ProfitabilityResult, Resource } from "@/types/dofus";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,19 +22,27 @@ import {
   Trophy,
   ChevronDown,
   ChevronUp,
+  Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { parseMarketBotOutputFile } from "@/lib/marketBotExchange";
+import { buildMarketBotInputFile, downloadMarketBotInputFile } from "@/lib/marketBotTargets";
+import { MarketBotOutputPriceEntry } from "@/types/marketBot";
 
 interface ProfitabilityTableProps {
   results: ProfitabilityResult[];
+  server: string;
+  dataset: "20" | "129";
   onBack: () => void;
   onSave?: () => void;
   quantities: Record<number, number>;
@@ -51,12 +59,15 @@ interface ProfitabilityTableProps {
   initialAcknowledgedItemResources?: Record<number, string[]>;
   onAcknowledgedItemResourcesChange?: (map: Record<number, string[]>) => void;
   onResourcePricePersist?: (id: number | undefined, price: number) => void;
+  onImportBotPrices?: (entries: MarketBotOutputPriceEntry[], fallbackTimestamp?: string) => void;
 }
 
 type SortKey = "benefit" | "marginPercent" | "hdvPrice" | "costTotal" | "multiplier";
 
 const ProfitabilityTable = ({
   results,
+  server,
+  dataset,
   onBack,
   onSave,
   quantities,
@@ -73,6 +84,7 @@ const ProfitabilityTable = ({
   initialAcknowledgedItemResources,
   onAcknowledgedItemResourcesChange,
   onResourcePricePersist,
+  onImportBotPrices,
 }: ProfitabilityTableProps) => {
   const [sortKey, setSortKey] = useState<SortKey>("marginPercent");
   const [sortDesc, setSortDesc] = useState(true);
@@ -89,10 +101,11 @@ const ProfitabilityTable = ({
   const [filterItemType, setFilterItemType] = useState<string | null>(null);
   const [editResource, setEditResource] = useState<{ id?: number; key?: string; name: string; unitPrice: number } | null>(null);
   const [editResourceInput, setEditResourceInput] = useState("");
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     setEditableResults(results);
-    onResultsChange?.(results);
     if (initialIncludedIds !== undefined) {
       setIncludedIds(new Set(initialIncludedIds));
     } else {
@@ -110,7 +123,7 @@ const ProfitabilityTable = ({
       });
       setAcknowledgedItemResources(next);
     }
-  }, [results, initialIncludedIds, initialAcknowledgedResources, initialAcknowledgedItemResources, onResultsChange]);
+  }, [results, initialIncludedIds, initialAcknowledgedResources, initialAcknowledgedItemResources]);
 
   useEffect(() => {
     const initialPrices: Record<number, string> = {};
@@ -325,6 +338,10 @@ const ProfitabilityTable = ({
       prev.forEach((id) => {
         if (existingIds.has(id)) next.add(id);
       });
+      const unchanged = prev.size === next.size && Array.from(prev).every((id) => next.has(id));
+      if (unchanged) {
+        return prev;
+      }
       if (onAcknowledgedResourcesChange) {
         onAcknowledgedResourcesChange(Array.from(next));
       }
@@ -404,6 +421,153 @@ const ProfitabilityTable = ({
     a.click();
   };
 
+  const exportBotInput = () => {
+    const usageByResourceId: Record<string, { itemId: number; itemName: string; quantity: number }[]> = {};
+    const resourceMap = new Map<string, Resource & { id: number }>();
+
+    editableResults.forEach((result) => {
+      (result.resources || []).forEach((resource) => {
+        const key = String(resource.id);
+        const existing = resourceMap.get(key);
+        if (existing) {
+          existing.totalQuantity += resource.totalQuantity;
+          existing.totalCost += resource.totalCost;
+        } else {
+          resourceMap.set(key, { ...resource });
+        }
+
+        if (!usageByResourceId[key]) usageByResourceId[key] = [];
+        usageByResourceId[key].push({
+          itemId: result.item.id,
+          itemName: result.item.name,
+          quantity: resource.totalQuantity,
+        });
+      });
+    });
+
+    const payload = buildMarketBotInputFile({
+      server,
+      dataset,
+      items: editableResults.map((result) => ({
+        id: result.item.id,
+        name: result.item.name,
+        level: result.item.level,
+        type: result.item.type,
+        iconUrl: result.item.iconUrl,
+        currentPrice: result.hdvPrice,
+        recipeIngredientCount: result.resources.length,
+      })),
+      resources: Array.from(resourceMap.values()).map((resource) => ({
+        id: resource.id,
+        name: resource.name,
+        iconUrl: resource.iconUrl,
+        totalQuantity: resource.totalQuantity,
+        currentPrice: resource.unitPrice,
+        usedBy: usageByResourceId[String(resource.id)] ?? [],
+      })),
+    });
+
+    downloadMarketBotInputFile(payload);
+    toast({
+      title: "Bot input exported",
+      description: `${payload.items.length} items and ${payload.resources.length} resources exported from the current analysis.`,
+    });
+  };
+
+  const handleImportButtonClick = () => {
+    importInputRef.current?.click();
+  };
+
+  const handleImportBotOutput = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    try {
+      const parsed = parseMarketBotOutputFile(await file.text());
+      if (parsed.server !== server || parsed.dataset !== dataset) {
+        throw new Error(`This file targets ${parsed.server}/${parsed.dataset}, but the analysis is set to ${server}/${dataset}.`);
+      }
+
+      const allowedItemIds = new Set(editableResults.map((result) => String(result.item.id)));
+      const allowedResourceIds = new Set(
+        editableResults.flatMap((result) => (result.resources || []).map((resource) => String(resource.id))),
+      );
+      const filteredEntries = parsed.prices.filter((entry) => (
+        entry.entityType === "item"
+          ? allowedItemIds.has(String(entry.id))
+          : allowedResourceIds.has(String(entry.id))
+      ));
+
+      if (filteredEntries.length === 0) {
+        throw new Error("No imported price matches the current analysis selection.");
+      }
+
+      onImportBotPrices?.(filteredEntries, parsed.collectedAt);
+
+      setEditableResults((prev) => {
+        const next = prev.map((result) => {
+          let hdvPrice = result.hdvPrice;
+          const itemEntry = filteredEntries.find((entry) => entry.entityType === "item" && String(entry.id) === String(result.item.id));
+          if (itemEntry) {
+            hdvPrice = itemEntry.price;
+          }
+
+          const resources = (result.resources || []).map((resource) => {
+            const resourceEntry = filteredEntries.find(
+              (entry) => entry.entityType === "resource" && String(entry.id) === String(resource.id),
+            );
+            if (!resourceEntry) return resource;
+            return {
+              ...resource,
+              unitPrice: resourceEntry.price,
+              totalCost: resource.totalQuantity * resourceEntry.price,
+            };
+          });
+
+          const costTotal = resources.reduce((sum, resource) => sum + resource.totalCost, 0);
+          const qty = result.quantity ?? quantities[result.item.id] ?? 1;
+          const revenue = hdvPrice * qty;
+          const benefit = revenue - costTotal;
+          const marginPercent = revenue > 0 ? (benefit / revenue) * 100 : 0;
+
+          return {
+            ...result,
+            hdvPrice,
+            resources,
+            costTotal,
+            benefit,
+            marginPercent,
+          };
+        });
+
+        const nextInputs = { ...priceInputs };
+        filteredEntries.forEach((entry) => {
+          if (entry.entityType === "item") {
+            nextInputs[Number(entry.id)] = entry.price ? String(entry.price) : "";
+          }
+        });
+        setPriceInputs(nextInputs);
+        onPriceInputsChange?.(nextInputs);
+        onResultsChange?.(next);
+        return next;
+      });
+
+      const importedItems = filteredEntries.filter((entry) => entry.entityType === "item").length;
+      const importedResources = filteredEntries.filter((entry) => entry.entityType === "resource").length;
+      toast({
+        title: "Bot output imported",
+        description: `${importedResources} resource prices and ${importedItems} item prices applied to the current analysis.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Import failed",
+        description: error instanceof Error ? error.message : "Unable to parse this bot output file.",
+      });
+    }
+  };
+
   return (
     <>
       <div className="space-y-6 pb-8">
@@ -459,6 +623,21 @@ const ProfitabilityTable = ({
           <Download className="w-4 h-4" />
           Exporter CSV
         </Button>
+        <Button variant="outline" onClick={exportBotInput} className="gap-2">
+          <Download className="w-4 h-4" />
+          Export bot input
+        </Button>
+        <Button variant="outline" onClick={handleImportButtonClick} className="gap-2">
+          <Upload className="w-4 h-4" />
+          Import bot output
+        </Button>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json"
+          className="hidden"
+          onChange={handleImportBotOutput}
+        />
         {onSave && (
           <Button variant="lime" onClick={onSave} className="gap-2">
             Sauvegarder l'analyse
@@ -959,6 +1138,9 @@ const ProfitabilityTable = ({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Modifier le prix</DialogTitle>
+            <DialogDescription>
+              Modifiez le prix unitaire de cette ressource.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">{editResource?.name}</p>

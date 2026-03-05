@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import { DofusItem, Resource, ProfitabilityResult } from "@/types/dofus";
+import { MarketBotOutputPriceEntry } from "@/types/marketBot";
 import { useItemsSearch } from "@/hooks/useItemsSearch";
 import Header from "@/components/Header";
 import SearchBar from "@/components/SearchBar";
@@ -79,7 +80,7 @@ const Index = () => {
   const [ackItemResourcesState, setAckItemResourcesState] = useState<Record<number, string[]>>({});
   const [hasRestoredLastAnalysis, setHasRestoredLastAnalysis] = useState(false);
   const server = "Abrak";
-  const { updateItemPrice, updateResourcePrice } = usePrices(server, datasetVersion);
+  const { updateItemPrice, updateResourcePrice, importBotPrices } = usePrices(server, datasetVersion);
   const PAGE_SIZE = 60;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const loaderRef = useRef<HTMLDivElement | null>(null);
@@ -419,6 +420,59 @@ const Index = () => {
     }, 300);
   }, [viewState, latestEditableResults, results, includedIdsState, selectedItems, quantities, priceInputsState, ackResourcesState, ackItemResourcesState, persistLastAnalysis]);
 
+  const handleImportBotPricesIntoAnalysis = useCallback((entries: MarketBotOutputPriceEntry[], fallbackTimestamp?: string) => {
+    importBotPrices(entries, fallbackTimestamp);
+
+    const itemPriceById = new Map<string, number>();
+    const resourcePriceById = new Map<string, number>();
+
+    entries.forEach((entry) => {
+      if (entry.entityType === "item") {
+        itemPriceById.set(String(entry.id), entry.price);
+        return;
+      }
+      resourcePriceById.set(String(entry.id), entry.price);
+    });
+
+    const applyImportedPrices = (current: ProfitabilityResult[]) => current.map((result) => {
+      const importedItemPrice = itemPriceById.get(String(result.item.id));
+      const hdvPrice = importedItemPrice ?? result.hdvPrice;
+      const resources = (result.resources || []).map((resource) => {
+        const importedResourcePrice = resourcePriceById.get(String(resource.id));
+        if (importedResourcePrice === undefined) return resource;
+        return {
+          ...resource,
+          unitPrice: importedResourcePrice,
+          totalCost: resource.totalQuantity * importedResourcePrice,
+        };
+      });
+      const costTotal = resources.reduce((sum, resource) => sum + resource.totalCost, 0);
+      const qty = result.quantity ?? quantities[result.item.id] ?? 1;
+      const revenue = hdvPrice * qty;
+      const benefit = revenue - costTotal;
+      const marginPercent = revenue > 0 ? (benefit / revenue) * 100 : 0;
+      return {
+        ...result,
+        hdvPrice,
+        resources,
+        costTotal,
+        benefit,
+        marginPercent,
+      };
+    });
+
+    setResults((prev) => applyImportedPrices(prev));
+    setLatestEditableResults((prev) => applyImportedPrices(prev));
+    setPriceInputsState((prev) => {
+      const next = { ...prev };
+      itemPriceById.forEach((price, id) => {
+        next[Number(id)] = price ? String(price) : "";
+      });
+      return next;
+    });
+    schedulePersist();
+  }, [importBotPrices, quantities, schedulePersist]);
+
   return (
     <div className="min-h-screen relative">
       {/* Background decorations */}
@@ -551,6 +605,8 @@ const Index = () => {
             <div className="space-y-6">
       <ProfitabilityTable
         results={results}
+        server={server}
+        dataset={datasetVersion}
         onBack={handleBackToSearch}
         onSave={selectedItems.length > 0 && results.length > 0 ? handleSaveAnalysis : undefined}
         quantities={quantities}
@@ -627,6 +683,7 @@ const Index = () => {
           if (id === undefined) return;
           updateResourcePrice(id, price);
         }}
+        onImportBotPrices={handleImportBotPricesIntoAnalysis}
         onResultsChange={(next) => {
           setResults(next);
           setLatestEditableResults(next);

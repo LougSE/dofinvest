@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { ChangeEvent, useState, useMemo, useEffect, useRef } from "react";
 import { DofusItem, Resource, RecipeIngredient } from "@/types/dofus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Coins, ArrowRight, Package } from "lucide-react";
+import { Coins, ArrowRight, Package, Download, Upload } from "lucide-react";
 import { useRecipes } from "@/hooks/useRecipes";
 import { usePrices } from "@/hooks/usePrices";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
+import { parseMarketBotOutputFile } from "@/lib/marketBotExchange";
+import { buildMarketBotInputFile, downloadMarketBotInputFile } from "@/lib/marketBotTargets";
 
 interface PriceInputModalProps {
   isOpen: boolean;
@@ -34,12 +37,14 @@ const PriceInputModal = ({
   const [step, setStep] = useState<"resources" | "hdv">("resources");
   const itemIds = useMemo(() => Array.from(new Set(selectedItems.map((item) => item.id))).filter(Boolean), [selectedItems]);
   const { recipes, isLoading: recipesLoading } = useRecipes(itemIds, dataset);
-  const { resourcePrices, itemPrices, savePrices, resetPrices } = usePrices(server, dataset);
+  const { resourcePrices, itemPrices, importBotPrices, savePrices, resetPrices } = usePrices(server, dataset);
   const [draftResourcePrices, setDraftResourcePrices] = useState<Record<string, number>>({});
   const [draftItemPrices, setDraftItemPrices] = useState<Record<string, number>>({});
   const [lockedResources, setLockedResources] = useState<Record<number, boolean>>({});
   const [lockedItems, setLockedItems] = useState<Record<number, boolean>>({});
   const hasInitializedLocks = useRef(false);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const { toast } = useToast();
 
   const aggregatedResources = useMemo(() => {
     try {
@@ -178,6 +183,108 @@ const PriceInputModal = ({
     (sum, res) => sum + (draftResourcePrices[String(res.itemId)] ?? resourcePrices[res.itemId] ?? 0) * res.totalQty,
     0
   );
+
+  const handleExportBotInput = () => {
+    const usageByResourceId: Record<string, { itemId: number; itemName: string; quantity: number }[]> = {};
+
+    selectedItems.forEach((item) => {
+      const recipe = recipes[item.id] || item.recipe || [];
+      recipe.forEach((ingredient) => {
+        const key = String(ingredient.itemId);
+        if (!usageByResourceId[key]) usageByResourceId[key] = [];
+        usageByResourceId[key].push({
+          itemId: item.id,
+          itemName: item.name,
+          quantity: ingredient.quantity,
+        });
+      });
+    });
+
+    const payload = buildMarketBotInputFile({
+      server,
+      dataset,
+      items: selectedItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        level: item.level,
+        type: item.type,
+        iconUrl: item.iconUrl,
+        currentPrice: draftItemPrices[String(item.id)] ?? itemPrices[item.id] ?? 0,
+        recipeIngredientCount: (recipes[item.id] || item.recipe || []).length,
+      })),
+      resources: resourceList.map((res) => ({
+        id: res.itemId,
+        name: res.name,
+        iconUrl: res.iconUrl,
+        totalQuantity: res.totalQty,
+        currentPrice: draftResourcePrices[String(res.itemId)] ?? resourcePrices[res.itemId] ?? 0,
+        usedBy: usageByResourceId[String(res.itemId)] ?? [],
+      })),
+    });
+
+    downloadMarketBotInputFile(payload);
+    toast({
+      title: "Bot input exported",
+      description: `${payload.items.length} items and ${payload.resources.length} resources exported from the current selection.`,
+    });
+  };
+
+  const handleImportButtonClick = () => {
+    importInputRef.current?.click();
+  };
+
+  const handleImportBotOutput = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    try {
+      const parsed = parseMarketBotOutputFile(await file.text());
+      if (parsed.server !== server || parsed.dataset !== dataset) {
+        throw new Error(`This file targets ${parsed.server}/${parsed.dataset}, but the modal is set to ${server}/${dataset}.`);
+      }
+
+      const allowedItemIds = new Set(selectedItems.map((item) => String(item.id)));
+      const allowedResourceIds = new Set(resourceList.map((resource) => String(resource.itemId)));
+      const filteredEntries = parsed.prices.filter((entry) => (
+        entry.entityType === "item"
+          ? allowedItemIds.has(String(entry.id))
+          : allowedResourceIds.has(String(entry.id))
+      ));
+
+      importBotPrices(filteredEntries, parsed.collectedAt);
+
+      setDraftItemPrices((prev) => {
+        const next = { ...prev };
+        filteredEntries.forEach((entry) => {
+          if (entry.entityType === "item") next[String(entry.id)] = entry.price;
+        });
+        return next;
+      });
+
+      setDraftResourcePrices((prev) => {
+        const next = { ...prev };
+        filteredEntries.forEach((entry) => {
+          if (entry.entityType === "resource") next[String(entry.id)] = entry.price;
+        });
+        return next;
+      });
+
+      const importedItems = filteredEntries.filter((entry) => entry.entityType === "item").length;
+      const importedResources = filteredEntries.filter((entry) => entry.entityType === "resource").length;
+
+      toast({
+        title: "Bot output imported",
+        description: `${importedResources} resource prices and ${importedItems} item prices applied to the current selection.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Import failed",
+        description: error instanceof Error ? error.message : "Unable to parse this bot output file.",
+      });
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -380,6 +487,23 @@ const PriceInputModal = ({
             >
               Réinitialiser les prix
             </Button>
+          </div>
+          <div className="mt-3 flex gap-3">
+            <Button variant="outline" onClick={handleExportBotInput} className="flex-1 gap-2">
+              <Download className="w-4 h-4" />
+              Export bot input
+            </Button>
+            <Button variant="outline" onClick={handleImportButtonClick} className="flex-1 gap-2">
+              <Upload className="w-4 h-4" />
+              Import bot output
+            </Button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={handleImportBotOutput}
+            />
           </div>
         </div>
       </DialogContent>

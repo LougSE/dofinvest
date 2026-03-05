@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PriceHistoryEntry } from "@/types/dofus";
 import { getLocalResourceAliases } from "@/lib/localDataClient";
+import { MarketBotOutputPriceEntry } from "@/types/marketBot";
 
 const RESOURCE_KEY = (server: string, dataset: "20" | "129") => `dofinvest_prices:${server}:${dataset}:resources`;
 const ITEM_KEY = (server: string, dataset: "20" | "129") => `dofinvest_prices:${server}:${dataset}:items`;
@@ -17,6 +18,28 @@ function parsePrices(raw: string | null): PricesMap {
 
 function parseHistory(raw: string | null): PriceHistoryMap {
   return raw ? JSON.parse(raw) : {};
+}
+
+function sanitizePrice(value: number) {
+  return Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+}
+
+function mergeHistoryEntry(
+  entries: PriceHistoryEntry[] = [],
+  nextEntry: PriceHistoryEntry,
+): PriceHistoryEntry[] {
+  const merged = [...entries, nextEntry]
+    .filter((entry) => entry && typeof entry.price === "number" && typeof entry.timestamp === "string")
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+  const deduped: PriceHistoryEntry[] = [];
+  merged.forEach((entry) => {
+    const last = deduped[deduped.length - 1];
+    if (last && last.price === entry.price && last.timestamp === entry.timestamp) return;
+    deduped.push(entry);
+  });
+
+  return deduped.slice(-MAX_HISTORY_ENTRIES);
 }
 
 function appendHistoryEntries(
@@ -261,7 +284,7 @@ export function usePrices(server: string, dataset: "20" | "129" = "129") {
   };
 
   const updateResourcePrice = (id: number, value: number) => {
-    const cleanValue = Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+    const cleanValue = sanitizePrice(value);
     const idKey = String(id);
     const aliasIds = getAliasIdsForResource(idKey);
     const nextResources = { ...resourcePricesRef.current };
@@ -273,10 +296,43 @@ export function usePrices(server: string, dataset: "20" | "129" = "129") {
   };
 
   const updateItemPrice = (id: number, value: number) => {
-    const cleanValue = Number.isFinite(value) ? Math.max(0, Math.trunc(value)) : 0;
+    const cleanValue = sanitizePrice(value);
     const nextItems = { ...itemPricesRef.current, [id]: cleanValue };
     const nextItemHistory = appendHistoryEntries(itemPricesRef.current, nextItems, itemHistoryRef.current);
     persistState(resourcePricesRef.current, nextItems, resourceHistoryRef.current, nextItemHistory);
+  };
+
+  const importBotPrices = (entries: MarketBotOutputPriceEntry[], fallbackTimestamp?: string) => {
+    const nextResources = { ...resourcePricesRef.current };
+    const nextItems = { ...itemPricesRef.current };
+    const nextResourceHistory = { ...resourceHistoryRef.current };
+    const nextItemHistory = { ...itemHistoryRef.current };
+
+    entries.forEach((entry) => {
+      const cleanValue = sanitizePrice(entry.price);
+      const timestamp = entry.observedAt ?? fallbackTimestamp ?? new Date().toISOString();
+
+      if (entry.entityType === "resource") {
+        const aliasIds = getAliasIdsForResource(String(entry.id));
+        aliasIds.forEach((aliasId) => {
+          nextResources[aliasId] = cleanValue;
+          nextResourceHistory[aliasId] = mergeHistoryEntry(nextResourceHistory[aliasId], {
+            price: cleanValue,
+            timestamp,
+          });
+        });
+        return;
+      }
+
+      const idKey = String(entry.id);
+      nextItems[idKey] = cleanValue;
+      nextItemHistory[idKey] = mergeHistoryEntry(nextItemHistory[idKey], {
+        price: cleanValue,
+        timestamp,
+      });
+    });
+
+    persistState(nextResources, nextItems, nextResourceHistory, nextItemHistory);
   };
 
   const resetPrices = () => {
@@ -299,6 +355,7 @@ export function usePrices(server: string, dataset: "20" | "129" = "129") {
     itemPriceHistory,
     updateResourcePrice,
     updateItemPrice,
+    importBotPrices,
     savePrices,
     resetPrices,
   };
