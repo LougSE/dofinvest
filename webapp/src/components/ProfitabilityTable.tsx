@@ -23,6 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
   Upload,
+  Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -419,6 +420,30 @@ const ProfitabilityTable = ({
     a.href = url;
     a.download = "dofinvest_analyse.csv";
     a.click();
+  };
+
+  const copyAggregatedResourcesToClipboard = async () => {
+    const lines: string[] = [];
+    lines.push("Ressources totales à acheter");
+    lines.push(`Total: ${formatKamas(aggregatedTotalCost)} kamas`);
+    lines.push("");
+
+    aggregatedResources.forEach((res) => {
+      lines.push(`- ${res.name}: ${res.totalQuantity} x ${formatKamas(res.unitPrice)} = ${formatKamas(res.totalCost)} kamas`);
+    });
+
+    try {
+      await navigator.clipboard.writeText(lines.join("\n"));
+      toast({
+        title: "Copié",
+        description: "La liste des ressources à acheter a été copiée dans le presse-papiers.",
+      });
+    } catch {
+      toast({
+        title: "Impossible de copier",
+        description: "Le navigateur a refusé l'accès au presse-papiers.",
+      });
+    }
   };
 
   const exportBotInput = () => {
@@ -875,7 +900,16 @@ const ProfitabilityTable = ({
                     </div>
                   </TableCell>
                   <TableCell className="text-foreground">
-                    {formatKamas(result.costTotal)}
+                    <div className="leading-tight">
+                      <p>{formatKamas(result.costTotal)}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {(() => {
+                          const qty = result.quantity ?? quantities[result.item.id] ?? 1;
+                          const unitCost = qty > 0 ? Math.round(result.costTotal / qty) : result.costTotal;
+                          return `u: ${formatKamas(unitCost)}`;
+                        })()}
+                      </p>
+                    </div>
                   </TableCell>
                   <TableCell className="text-primary font-medium">
                     <input
@@ -1055,6 +1089,15 @@ const ProfitabilityTable = ({
                 onClick={() => setResourceSortDesc((prev) => !prev)}
               >
                 Trier par coût {resourceSortDesc ? "↓" : "↑"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={copyAggregatedResourcesToClipboard}
+                className="gap-2"
+              >
+                <Copy className="h-4 w-4" />
+                Copier dans clipboard
               </Button>
             </div>
           </div>
